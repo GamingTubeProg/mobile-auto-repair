@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@300;400;500;700&display=swap');
+
+:root {
+  /* Matte Black Industrial Theme */
+  --bg-dark: #090a0c;
+  --bg-card: #15181c;
+  --bg-hover: #1e2227;
+  
+  --text-main: #ffffff;
+  --text-muted: #8e95a3;
+  
+  /* Accent Colors - Warning Orange / Safety Yellow */
+  --accent-primary: #e65c00; 
+  --accent-secondary: #f39c12; 
+  
+  /* Sharp Borders */
+  --border-color: #2a2f38;
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease-in-out;
+  --transition-normal: 0.4s ease-in-out;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color var(--transition-fast);
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* Utilities */
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 4rem;
+}
+
+.section {
+  padding: 10rem 0;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 2rem;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  display: block;
+}
+
+/* Brutalist Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 3rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid transparent;
+}
+
+.btn-primary {
+  background-color: var(--text-main);
+  color: var(--bg-dark);
+}
+
+.btn-primary:hover {
+  background-color: transparent;
+  color: var(--text-main);
+  border-color: var(--text-main);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-main);
+}
+
+/* Solid Blocks - No Glass */
+.solid-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .container { padding: 0 2rem; }
+  .section { padding: 6rem 0; }
+}
+@media (max-width: 768px) {
+  .title { font-size: 3rem; }
+}

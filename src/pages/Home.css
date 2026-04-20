@@ -1,0 +1,301 @@
+/* ==================================
+   INDUSTRIAL PREMIUM MATTE BLACK
+   ================================== */
+
+.home-matte {
+  display: flex;
+  flex-direction: column;
+}
+
+/* === HERO SECTION === */
+.hero-industrial {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 5rem;
+}
+
+.hero-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url('/assets/hero_no_person_1775255923634.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  filter: contrast(1.1) brightness(0.6) grayscale(20%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end; /* Align right to show more image */
+}
+
+.hero-card {
+  max-width: 600px;
+  padding: 4rem;
+  /* solid-box already gives #15181c bg and border */
+}
+
+.hero-title {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  letter-spacing: -2px;
+}
+
+.hero-card p {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  margin-bottom: 3rem;
+}
+
+/* === SHOWROOM GRID === */
+.showroom-header {
+  margin-bottom: 4rem;
+}
+
+.showroom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2px; /* Tight industrial grid */
+  background-color: var(--border-color); /* Acts as border between tiles */
+  border: 2px solid var(--border-color);
+}
+
+.service-tile {
+  background-color: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+  height: 480px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+}
+
+.tile-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(100%) opacity(0.3);
+  transition: filter var(--transition-normal), transform 1s ease, opacity var(--transition-normal);
+  z-index: 0;
+}
+
+.tile-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to top, var(--bg-dark) 0%, transparent 80%);
+  z-index: 1;
+}
+
+.service-tile:hover .tile-img {
+  filter: grayscale(0%) opacity(0.7);
+  transform: scale(1.05);
+}
+
+.tile-content {
+  position: relative;
+  z-index: 2;
+  padding: 2.5rem;
+}
+
+.tile-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.tile-icon {
+  color: var(--accent-primary);
+}
+
+.tile-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tile-desc {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* Visor Component */
+.tile-visor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 2rem;
+  z-index: 3;
+  border-top: 2px solid var(--border-color);
+  transform: translateY(101%);
+  transition: transform var(--transition-normal);
+}
+
+.service-tile:hover .tile-visor {
+  transform: translateY(0);
+}
+
+.tile-visor h4 {
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.tile-visor p {
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+/* === SPLIT SCREEN LAYOUTS (About & Contact) === */
+.about-split, .contact-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 80vh;
+  border-top: 2px solid var(--border-color);
+}
+
+/* About Left Side */
+.about-image {
+  background-image: url('/assets/engine_no_person_1775255972730.png');
+  background-size: cover;
+  background-position: center;
+  filter: contrast(1.1) grayscale(30%);
+  border-right: 2px solid var(--border-color);
+}
+
+/* About Right Side */
+.about-text-block {
+  padding: 8rem 6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.divider {
+  border: none;
+  border-top: 2px solid var(--accent-primary);
+  width: 80px;
+  margin: 2rem 0;
+}
+
+.about-text-block p {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+.about-text-block p:first-of-type {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* Contact Left Side */
+.contact-info-block {
+  padding: 8rem 6rem;
+  border-right: 2px solid var(--border-color);
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+}
+
+.contact-lede {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 4rem;
+}
+
+.contact-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.metric label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+}
+
+.metric a, .metric p {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.metric a:hover {
+  color: var(--accent-secondary);
+}
+
+/* Contact Right Side */
+.contact-form-block {
+  padding: 8rem 6rem;
+  background-color: var(--bg-dark);
+}
+
+.brutalist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  color: var(--text-main);
+  font-size: 1.1rem;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast);
+}
+.form-group select { cursor: pointer; }
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* Responsive Structural Overrides */
+@media (max-width: 1200px) {
+  .hero-card { padding: 3rem; }
+  .about-text-block, .contact-info-block, .contact-form-block { padding: 4rem; }
+}
+
+@media (max-width: 1000px) {
+  .showroom-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .about-split, .contact-split { grid-template-columns: 1fr; }
+  .about-image { min-height: 400px; border-right: none; border-bottom: 2px solid var(--border-color); }
+  .contact-info-block { border-right: none; border-bottom: 2px solid var(--border-color); }
+}
+
+@media (max-width: 600px) {
+  .hero-industrial { padding-bottom: 2rem; align-items:flex-end; }
+  .hero-card { padding: 2rem; width: 100%; border-left: none; border-right: none; }
+  .hero-title { font-size: 3rem; }
+}

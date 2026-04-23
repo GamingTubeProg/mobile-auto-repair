@@ -758,3 +758,27 @@
   .tile-category { top: 1.4rem; left: 1.4rem; }
   .tile-content { padding: 2rem 1.5rem; }
 }
+
+/* =====================================================
+   ESTIMATOR SECTION WRAPPER
+   ===================================================== */
+.estimator-section {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(230, 92, 0, 0.08), transparent 50%),
+    radial-gradient(ellipse at 90% 100%, rgba(243, 156, 18, 0.05), transparent 55%),
+    var(--bg-dark);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.estimator-section .process-header {
+  margin-bottom: 4rem;
+  text-align: center;
+}
+
+.estimator-section .showroom-lede {
+  max-width: 62ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+

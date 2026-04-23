@@ -23,6 +23,7 @@ const Navbar = () => {
         </div>
         <ul className={`nav-links${menuOpen ? ' is-open' : ''}`}>
           <li><a href="#services" onClick={close}>Services</a></li>
+          <li><a href="#estimator" onClick={close}>Estimate</a></li>
           <li><a href="#about" onClick={close}>About</a></li>
           <li><a href="#contact" className="btn btn-primary btn-small" onClick={close}>Book Now</a></li>
         </ul>

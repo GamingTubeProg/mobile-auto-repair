@@ -7,6 +7,7 @@ import {
   CalendarCheck, MapPin, Search, CheckCircle2,
   Award, Clock, ShieldCheck, Star,
 } from 'lucide-react';
+import Estimator from '../components/Estimator';
 
 const services = [
   {
@@ -335,6 +336,23 @@ const Home = () => {
                 {i < processSteps.length - 1 && <span className="process-connector" />}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ESTIMATOR */}
+      <section className="estimator-section section" id="estimator">
+        <div className="container">
+          <header className="process-header" data-reveal>
+            <span className="subtitle accent-line">Get an Estimate</span>
+            <h2 className="title">Instant <span className="title-accent">Quote Tool.</span></h2>
+            <p className="showroom-lede">
+              Pick your vehicle, describe the problem, and get a live price bracket — powered by the
+              NHTSA vehicle database and real Ontario repair data. No spam, no obligation.
+            </p>
+          </header>
+          <div data-reveal>
+            <Estimator />
           </div>
         </div>
       </section>

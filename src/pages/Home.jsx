@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import './Home.css';
 import {
   Laptop, Settings, ShieldAlert, BatteryCharging,
   Car, Droplet, ThermometerSnowflake, Wrench,
-  Fuel, Activity, Truck, Zap, Cpu
+  Fuel, Activity, Truck, Zap, Cpu,
+  CalendarCheck, MapPin, Search, CheckCircle2,
+  Award, Clock, ShieldCheck, Star,
 } from 'lucide-react';
 
 const services = [
@@ -13,23 +15,26 @@ const services = [
     desc: 'Quick and accurate diagnostics for any vehicle issue.',
     symptoms: 'Dashboard warning lights, unknown noises, or sudden performance drops.',
     icon: <Laptop />,
-    img: '/assets/diagnostics_service_1775239848189.png',
+    img: '/assets/diag_laptop_no_person_1775256815028.png',
+    category: 'Diagnostic',
   },
   {
     id: 2,
     title: 'Engine Problems',
     desc: 'Diagnosing and addressing common engine problems.',
-    symptoms: 'Engine not starting, engine running rough, poor idle quality, or heavy smoke.',
+    symptoms: 'Engine not starting, running rough, poor idle quality, or heavy smoke.',
     icon: <Settings />,
-    img: '/assets/engine_service_1775239884155.png',
+    img: '/assets/engine_original.png',
+    category: 'Mechanical',
   },
   {
     id: 3,
     title: 'Brake Issues',
     desc: 'Providing brake repairs to ensure safety and restore stopping power.',
-    symptoms: 'Squealing or grinding noises, vibrating steering wheel while braking, long stopping distances.',
+    symptoms: 'Squealing or grinding noises, vibrating wheel while braking, long stopping distances.',
     icon: <ShieldAlert />,
-    img: '/assets/brakes_service_1775239862608.png',
+    img: '/assets/brakes_original.jpg',
+    category: 'Safety',
   },
   {
     id: 4,
@@ -37,7 +42,8 @@ const services = [
     desc: 'Testing and replacement of vehicle batteries on the spot.',
     symptoms: 'Car won\'t start, slow engine turn-over, or flickering electronics.',
     icon: <BatteryCharging />,
-    img: '/assets/battery_original.png',
+    img: '/assets/engine_no_person_1775255972730.png',
+    category: 'Electrical',
   },
   {
     id: 5,
@@ -45,7 +51,8 @@ const services = [
     desc: 'Fixing or replacing your tire and ensuring proper inflation.',
     symptoms: 'Visible flat tire, low tire pressure warning, or tire tread damage.',
     icon: <Car />,
-    img: '/assets/tires_service_1775239901729.png',
+    img: '/assets/tires_original.png',
+    category: 'Mechanical',
   },
   {
     id: 6,
@@ -53,15 +60,17 @@ const services = [
     desc: 'Keep your engine running smoothly with a convenient on-site oil change.',
     symptoms: 'Overdue maintenance schedule, low oil level light, or dark/gritty oil on the dipstick.',
     icon: <Droplet />,
-    img: '/assets/oil_change_service_1775239915994.png',
+    img: '/assets/oil_change_no_person_1775255997295.png',
+    category: 'Maintenance',
   },
   {
     id: 7,
     title: 'Cooling System Repairs',
     desc: 'Prevent overheating with cooling system or radiator fixes.',
-    symptoms: 'Overheating engine, coolant leaks on the ground, or steam coming from under the hood.',
+    symptoms: 'Overheating engine, coolant leaks on the ground, or steam from under the hood.',
     icon: <ThermometerSnowflake />,
     img: '/assets/radiator_original.jpg',
+    category: 'Mechanical',
   },
   {
     id: 8,
@@ -70,6 +79,7 @@ const services = [
     symptoms: 'Vehicle feeling unstable, strange clunking noises over bumps, or pulling to one side.',
     icon: <Wrench />,
     img: '/assets/brakes_no_person_1775255952995.png',
+    category: 'Safety',
   },
   {
     id: 9,
@@ -78,6 +88,7 @@ const services = [
     symptoms: 'Stalling, loss of power, poor fuel economy, or failing to start despite turning over.',
     icon: <Fuel />,
     img: '/assets/engine_original.png',
+    category: 'Mechanical',
   },
   {
     id: 10,
@@ -85,7 +96,8 @@ const services = [
     desc: 'Thorough diagnostics to determine shifting issues and guide repairs.',
     symptoms: 'Rough shifting, slipping gears, or hesitation during acceleration.',
     icon: <Activity />,
-    img: 'https://images.pexels.com/photos/190537/pexels-photo-190537.jpeg?auto=compress&cs=tinysrgb&w=800',
+    img: '/assets/tires_no_person_1775255984902.png',
+    category: 'Diagnostic',
   },
   {
     id: 11,
@@ -93,7 +105,8 @@ const services = [
     desc: 'If on-site repair is not possible, we offer towing support with a trusted partner workshop.',
     symptoms: 'Ensures your vehicle is safely transported for complex repairs requiring specialized conditions.',
     icon: <Truck />,
-    img: '/assets/hero_mechanic_1775239834825.png',
+    img: '/assets/hero_no_person_1775255923634.png',
+    category: 'Support',
   },
   {
     id: 12,
@@ -101,7 +114,8 @@ const services = [
     desc: 'Diagnosing and repairing vehicles that fail to start or crank.',
     symptoms: 'Turning the key does nothing, dashboard lights dim, clicking sound, or complete silence.',
     icon: <Zap />,
-    img: '/assets/diag_laptop_no_person_1775256815028.png',
+    img: '/assets/diagnostics_no_person_1775255939503.png',
+    category: 'Electrical',
   },
   {
     id: 13,
@@ -109,8 +123,50 @@ const services = [
     desc: 'Repair and replacement of failing starter motors and alternators.',
     symptoms: 'Grinding noise when starting, slow cranking, battery warning light on, or frequent jump-starts.',
     icon: <Cpu />,
-    img: '/assets/diagnostics_no_person_1775255939503.png',
+    img: '/assets/engine_no_person_1775255972730.png',
+    category: 'Electrical',
   },
+];
+
+const stats = [
+  { value: '15+', label: 'Years Experience', icon: <Award /> },
+  { value: '500+', label: 'Vehicles Serviced', icon: <Car /> },
+  { value: '100%', label: 'On-Site Service', icon: <MapPin /> },
+  { value: '24/7', label: 'Emergency Calls', icon: <Clock /> },
+];
+
+const processSteps = [
+  {
+    num: '01',
+    icon: <CalendarCheck />,
+    title: 'Book Your Slot',
+    desc: 'Call or submit the quote form. We confirm a time that works for you — same-day options available.',
+  },
+  {
+    num: '02',
+    icon: <MapPin />,
+    title: 'We Come to You',
+    desc: 'Fully equipped mobile workshop arrives at your driveway, workplace, or roadside — anywhere in Greater London, ON.',
+  },
+  {
+    num: '03',
+    icon: <Search />,
+    title: 'Precision Diagnostic',
+    desc: 'Advanced OEM-grade diagnostic tools pinpoint the real issue. You get a transparent, itemized quote before any work begins.',
+  },
+  {
+    num: '04',
+    icon: <CheckCircle2 />,
+    title: 'Professional Repair',
+    desc: 'Repairs completed on-site with manufacturer-spec parts. Full workmanship warranty on every job.',
+  },
+];
+
+const trustBadges = [
+  { icon: <ShieldCheck />, label: 'Fully Insured' },
+  { icon: <Award />, label: 'Master Certified' },
+  { icon: <Star />, label: 'Top-Rated London ON' },
+  { icon: <Clock />, label: 'Same-Day Service' },
 ];
 
 const handleSubmit = (e) => {
@@ -123,23 +179,96 @@ const handleSubmit = (e) => {
   window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
 };
 
+/**
+ * Attaches IntersectionObserver to every element with [data-reveal]
+ * inside the given root. Elements get `.is-visible` when scrolled in.
+ */
+const useScrollReveal = (rootRef) => {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const targets = root.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach(t => t.classList.add('is-visible'));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    targets.forEach(t => io.observe(t));
+    return () => io.disconnect();
+  }, [rootRef]);
+};
+
 const Home = () => {
+  const rootRef = useRef(null);
+  useScrollReveal(rootRef);
+
   return (
-    <div className="home-matte">
-      {/* HERO SECTION */}
+    <div className="home-matte" ref={rootRef}>
+      {/* HERO */}
       <section className="hero-industrial" id="home">
         <div className="hero-img"></div>
+        <div className="hero-grain"></div>
         <div className="hero-content container">
-          <div className="hero-card solid-box">
-            <span className="subtitle">London, ON</span>
-            <h1 className="title hero-title">PRECISION<br/>MOBILE<br/>SERVICE.</h1>
+          <div className="hero-card solid-box" data-reveal>
+            <span className="subtitle accent-line">London, ON · Mobile Workshop</span>
+            <h1 className="title hero-title">
+              <span className="hero-title-line">PRECISION</span>
+              <span className="hero-title-line">MOBILE</span>
+              <span className="hero-title-line hero-title-accent">SERVICE.</span>
+            </h1>
             <p>
-              World-class automotive diagnostics, repair, and engineering directly to your location.
-              Uncompromising technical expertise delivered without the showroom wait.
+              World-class automotive diagnostics, repair, and engineering delivered directly
+              to your location. Uncompromising technical expertise — without the showroom wait.
             </p>
             <div className="hero-actions">
-              <a href="#contact" className="btn btn-primary">Book Consult</a>
+              <a href="#contact" className="btn btn-primary btn-arrow">
+                Book Consult
+                <span className="btn-arrow-icon">→</span>
+              </a>
+              <a href="#services" className="btn btn-ghost">View Services</a>
             </div>
+            <div className="hero-trust" data-reveal>
+              {trustBadges.map((t, i) => (
+                <div className="hero-trust-item" key={i}>
+                  <span className="hero-trust-icon">{t.icon}</span>
+                  <span>{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="hero-scroll-hint">
+          <span>SCROLL</span>
+          <span className="hero-scroll-line" />
+        </div>
+      </section>
+
+      {/* STATS STRIP */}
+      <section className="stats-strip" data-reveal>
+        <div className="container">
+          <div className="stats-grid">
+            {stats.map((s, i) => (
+              <div className="stat-item" key={i}>
+                <span className="stat-icon">{s.icon}</span>
+                <div className="stat-body">
+                  <span className="stat-value">{s.value}</span>
+                  <span className="stat-label">{s.label}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -147,16 +276,22 @@ const Home = () => {
       {/* SERVICE CATALOGUE */}
       <section className="showroom section" id="services">
         <div className="container">
-          <header className="showroom-header">
-            <span className="subtitle">Capabilities</span>
-            <h2 className="title">Service Catalogue</h2>
+          <header className="showroom-header" data-reveal>
+            <span className="subtitle accent-line">Capabilities</span>
+            <h2 className="title">Service <span className="title-accent">Catalogue</span></h2>
+            <p className="showroom-lede">
+              Thirteen specialized capabilities — from quick diagnostics to complex repairs —
+              all delivered on-site with manufacturer-spec tools and parts.
+            </p>
           </header>
 
           <div className="showroom-grid">
-            {services.map(svc => (
-              <div className="service-tile" key={svc.id}>
+            {services.map((svc, idx) => (
+              <div className="service-tile" key={svc.id} data-reveal style={{ transitionDelay: `${(idx % 3) * 60}ms` }}>
                 <div className="tile-img" style={{ backgroundImage: `url(${svc.img})` }}></div>
                 <div className="tile-overlay"></div>
+                <span className="tile-number">{String(svc.id).padStart(2, '0')}</span>
+                <span className="tile-category">{svc.category}</span>
                 <div className="tile-content">
                   <div className="tile-header">
                     <span className="tile-icon">{svc.icon}</span>
@@ -177,12 +312,39 @@ const Home = () => {
         </div>
       </section>
 
+      {/* PROCESS */}
+      <section className="process section" id="process">
+        <div className="container">
+          <header className="process-header" data-reveal>
+            <span className="subtitle accent-line">The Method</span>
+            <h2 className="title">How It <span className="title-accent">Works.</span></h2>
+            <p className="showroom-lede">
+              A streamlined four-step protocol built around your time — no towing, no waiting rooms, no surprises.
+            </p>
+          </header>
+
+          <div className="process-grid">
+            {processSteps.map((step, i) => (
+              <div className="process-step" key={i} data-reveal style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="process-step-head">
+                  <span className="process-num">{step.num}</span>
+                  <span className="process-icon">{step.icon}</span>
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+                {i < processSteps.length - 1 && <span className="process-connector" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ABOUT */}
       <section className="about-split" id="about">
-        <div className="about-image"></div>
-        <div className="about-text-block">
-          <span className="subtitle">The Craftsman</span>
-          <h2 className="title">German Technical Excellence.</h2>
+        <div className="about-image" data-reveal></div>
+        <div className="about-text-block" data-reveal>
+          <span className="subtitle accent-line">The Craftsman</span>
+          <h2 className="title">German Technical <span className="title-accent">Excellence.</span></h2>
           <hr className="divider" />
           <p>
             I am a highly experienced automotive mechanic with a strong background in diagnosing
@@ -195,14 +357,22 @@ const Home = () => {
             reliant on sophisticated systems, I use state-of-the-art diagnostic tools along with
             deep technical expertise to pinpoint issues efficiently and accurately. No guesswork. Just precision.
           </p>
+
+          <div className="about-marques">
+            <span>BMW</span>
+            <span>Mercedes-Benz</span>
+            <span>Audi</span>
+            <span>Volkswagen</span>
+            <span>Porsche</span>
+          </div>
         </div>
       </section>
 
       {/* CONTACT */}
       <section className="contact-split" id="contact">
-        <div className="contact-info-block solid-box">
-          <span className="subtitle">Logistics</span>
-          <h2 className="title">Schedule Deployment.</h2>
+        <div className="contact-info-block solid-box" data-reveal>
+          <span className="subtitle accent-line">Logistics</span>
+          <h2 className="title">Schedule <span className="title-accent">Deployment.</span></h2>
           <p className="contact-lede">
             Skip the waiting room. Experience premium, on-site mechanical care tailored
             to your exact location and schedule.
@@ -221,10 +391,14 @@ const Home = () => {
               <label>Base</label>
               <p>London, Ontario &amp; Surrounding</p>
             </div>
+            <div className="metric">
+              <label>Hours</label>
+              <p>Mon – Sat · 8am – 8pm</p>
+            </div>
           </div>
         </div>
 
-        <div className="contact-form-block">
+        <div className="contact-form-block" data-reveal>
           <form className="brutalist-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="f-name">Full Name</label>
@@ -253,7 +427,10 @@ const Home = () => {
                 defaultValue={`Hi! I would like to request a quick quote for mobile auto repair services. Here are my details:\n\n- Vehicle Year/Make/Model: \n- Service Requested: \n- Observed Symptoms: \n- Location for On-site Service: \n- Preferred Date/Time: \n\nThank you!`}
               ></textarea>
             </div>
-            <button type="submit" className="btn btn-primary submit-btn">Submit Request</button>
+            <button type="submit" className="btn btn-primary submit-btn btn-arrow">
+              Submit Request
+              <span className="btn-arrow-icon">→</span>
+            </button>
           </form>
         </div>
       </section>

@@ -9,10 +9,14 @@
  * Start: node scripts/admin-server.js
  */
 
-const http  = require('http');
-const { execSync } = require('child_process');
-const fs    = require('fs');
-const path  = require('path');
+import http               from 'http';
+import { execSync }       from 'child_process';
+import fs                 from 'fs';
+import path               from 'path';
+import { fileURLToPath }  from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
 const PORT  = 3001;
 const ROOT  = path.resolve(__dirname, '..');
@@ -49,18 +53,14 @@ function writeFeatures(features) {
 const DEFAULTS = {
   /**
    * ESTIMATOR_SHOW_PRICE
-   * true  → Show the preliminary CAD price range on step 4
-   *         (e.g. $220 – $480). A note explains the price
-   *         may adjust slightly after on-site inspection.
-   * false → Hide the price. Only the vehicle/symptom summary
-   *         and "Request a precise quote" button are shown.
+   * true  → Show the preliminary CAD price range on step 4.
+   * false → Hide the price; only summary + quote button shown.
    */
 
   /**
    * ESTIMATOR_ENABLED
    * true  → The full 4-step wizard is visible on the page.
    * false → Estimator section and navbar link are hidden.
-   *         Only the main contact form remains.
    */
 ${defaults}
 };
@@ -69,7 +69,6 @@ ${defaults}
 function loadFeatures() {
   try {
     const stored = JSON.parse(localStorage.getItem('mar_features') || '{}');
-    // Only accept keys that exist in DEFAULTS — ignore unknown keys.
     const safe = Object.fromEntries(
       Object.keys(DEFAULTS)
         .filter(k => k in stored)
@@ -90,7 +89,7 @@ export default FEATURES;
 
 /* ── HTTP server ──────────────────────────────────────────── */
 const server = http.createServer((req, res) => {
-  // CORS — allow any localhost origin (Vite uses 5173, but IP may vary)
+  // CORS — accept any localhost origin
   const origin = req.headers.origin || '';
   if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -166,6 +165,6 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Admin API  →  http://localhost:${PORT}`);
-  console.log('  Waiting for deploy requests from /admin panel...\n');
+  console.log('\n  ✓ Admin-Server läuft auf http://localhost:' + PORT);
+  console.log('  Warte auf Deploy-Anfragen vom /admin Panel...\n');
 });

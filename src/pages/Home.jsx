@@ -225,7 +225,10 @@ const buildDetailsFromPayload = (p) => {
   lines.push(`Shop visited: ${p.shopVisited ? 'Yes' : 'No'}`);
   if (p.shopVisited && p.shopDetails) lines.push(`Shop notes: ${p.shopDetails}`);
 
-  if (p.estimate) {
+  // Only include the price range if the feature flag allows it.
+  // When ESTIMATOR_SHOW_PRICE is OFF the customer never sees the number —
+  // not on screen and not in the pre-filled message.
+  if (p.estimate && FEATURES.ESTIMATOR_SHOW_PRICE) {
     lines.push('',
       '-- PRELIMINARY ESTIMATE --',
       `$${p.estimate.low.toLocaleString()} – $${p.estimate.high.toLocaleString()} CAD`,

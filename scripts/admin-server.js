@@ -14,6 +14,7 @@ import { execSync }       from 'child_process';
 import fs                 from 'fs';
 import path               from 'path';
 import { fileURLToPath }  from 'url';
+import { Resend }         from 'resend';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -155,6 +156,64 @@ const server = http.createServer((req, res) => {
         console.error('[admin-server] deploy error:', msg);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, message: msg }));
+      }
+    });
+    return;
+  }
+
+  /* POST /api/send-email — contact form submission (dev proxy) */
+  if (req.method === 'POST' && req.url === '/api/send-email') {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const { name, phone, vehicle, details } = JSON.parse(body);
+
+        if (!name || !phone) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Name and phone are required.' }));
+          return;
+        }
+
+        const subject  = `Quote Request – ${vehicle || 'Vehicle not specified'}`;
+        const textBody = [
+          `Name:    ${name}`,
+          `Phone:   ${phone}`,
+          `Vehicle: ${vehicle || 'Not specified'}`,
+          ``,
+          details || '(no details)',
+        ].join('\n');
+
+        const apiKey = process.env.RESEND_API_KEY;
+
+        if (!apiKey) {
+          // No key configured — log to console for local dev testing
+          console.log('\n  📧 [DEV] Email would be sent:');
+          console.log(`  To:      Mobile.Automotive@hotmail.com`);
+          console.log(`  Subject: ${subject}`);
+          console.log(`  Body:\n${textBody}\n`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, dev: true }));
+          return;
+        }
+
+        // Real send via Resend
+        const resend = new Resend(apiKey);
+        await resend.emails.send({
+          from:    'Mobile Auto Repair <onboarding@resend.dev>',
+          to:      ['Mobile.Automotive@hotmail.com'],
+          subject,
+          text:    textBody,
+        });
+
+        console.log(`  ✓ Email sent to Mobile.Automotive@hotmail.com`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+
+      } catch (err) {
+        console.error('[admin-server] send-email error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to send email.' }));
       }
     });
     return;

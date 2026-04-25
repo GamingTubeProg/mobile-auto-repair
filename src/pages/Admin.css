@@ -429,6 +429,122 @@
 
 .admin-section-last { }
 
+/* ── Server status indicator ── */
+.admin-server-status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  margin-bottom: 1.5rem;
+}
+
+.admin-server-status.online  { border-color: #2ecc71; color: #2ecc71; }
+.admin-server-status.offline { border-color: #e74c3c; color: #e74c3c; }
+
+.admin-server-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--border-color);
+}
+
+.admin-server-status.online  .admin-server-dot { background: #2ecc71; }
+.admin-server-status.offline .admin-server-dot { background: #e74c3c; }
+
+/* ── One-click deploy CTA ── */
+.admin-deploy-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.adm-btn-deploy {
+  background: var(--accent-primary);
+  color: var(--bg-dark);
+  border-color: var(--accent-primary);
+  font-size: 1rem;
+  padding: 1.1rem 2.5rem;
+  letter-spacing: 1.5px;
+  width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.adm-btn-deploy:hover:not(:disabled) {
+  background: #ff7a1a;
+  border-color: #ff7a1a;
+}
+
+.adm-btn-deploy:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adm-btn-deploy.is-deploying {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* ── Deploy status feedback ── */
+.admin-deploy-status {
+  padding: 0.9rem 1.2rem;
+  font-size: 0.9rem;
+  border: 1px solid;
+  line-height: 1.5;
+}
+
+.admin-deploy-status.is-success  { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.07); }
+.admin-deploy-status.is-no-change { border-color: var(--accent-secondary); color: var(--accent-secondary); background: rgba(243,156,18,0.07); }
+.admin-deploy-status.is-error    { border-color: #e74c3c; color: #e74c3c; background: rgba(231,76,60,0.07); }
+
+/* ── Manual fallback (collapsible) ── */
+.admin-manual-fallback {
+  border: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}
+
+.admin-manual-fallback summary {
+  padding: 0.85rem 1.1rem;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-manual-fallback summary::before {
+  content: '▶';
+  font-size: 0.6rem;
+  transition: transform 0.2s;
+}
+
+.admin-manual-fallback[open] summary::before { transform: rotate(90deg); }
+.admin-manual-fallback summary:hover { color: var(--text-main); }
+
+.admin-manual-fallback-body {
+  padding: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-manual-fallback-body p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  line-height: 1.55;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .admin-main { padding: 1.5rem 1rem 3rem; }

@@ -39,15 +39,45 @@ function getEffective(stored) {
 }
 
 const Admin = () => {
-  const [stored,   setStored]   = useState(loadStored);
-  const [saved,    setSaved]    = useState(false);
-  const [copied,   setCopied]   = useState(false);
-  const [password, setPassword] = useState('');
-  const [unlocked, setUnlocked] = useState(
+  const [stored,       setStored]       = useState(loadStored);
+  const [saved,        setSaved]        = useState(false);
+  const [copied,       setCopied]       = useState(false);
+  const [deployStatus, setDeployStatus] = useState(null); // null|'checking'|'deploying'|'success'|'no-change'|{error}
+  const [serverOnline, setServerOnline] = useState(null); // null=unknown, true, false
+  const [password,     setPassword]     = useState('');
+  const [unlocked,     setUnlocked]     = useState(
     () => localStorage.getItem('mar_admin_auth') === 'ok'
   );
 
   const effective = getEffective(stored);
+
+  // Check if local admin server is reachable
+  React.useEffect(() => {
+    if (!unlocked) return;
+    fetch('http://localhost:3001/api/status')
+      .then(r => r.ok && setServerOnline(true))
+      .catch(() => setServerOnline(false));
+  }, [unlocked]);
+
+  const handleDeploy = async () => {
+    setDeployStatus('deploying');
+    try {
+      const res  = await fetch('http://localhost:3001/api/deploy', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ features: effective }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDeployStatus(data.noChange ? 'no-change' : 'success');
+      } else {
+        setDeployStatus({ error: data.message || 'Unbekannter Fehler.' });
+      }
+    } catch {
+      setDeployStatus({ error: 'Admin-Server nicht erreichbar. Bitte über den Desktop-Shortcut starten.' });
+    }
+    setTimeout(() => setDeployStatus(null), 10000);
+  };
 
   const toggle = (key) => {
     setStored(prev => ({ ...prev, [key]: !effective[key] }));
@@ -204,41 +234,64 @@ const Admin = () => {
 
         {/* DEPLOY SECTION */}
         <section className="admin-section">
-          <h2 className="admin-section-title">Make Changes Permanent</h2>
+          <h2 className="admin-section-title">Permanent deployen</h2>
           <p className="admin-section-sub">
-            Copy the snippet below and paste it into{' '}
-            <code>src/config/features.js</code> (replace the <code>DEFAULTS</code> block),
-            then push to GitHub — Vercel redeploys automatically and all visitors see the change.
+            Ein Klick schreibt <code>features.js</code>, commitet und pusht zu GitHub.
+            Vercel deployt automatisch — alle Besucher sehen die Änderung in ~60 Sekunden.
           </p>
 
-          <div className="admin-code-block">
-            <div className="admin-code-header">
-              <span>src/config/features.js — DEFAULTS block</span>
-              <button className="adm-btn adm-btn-small" onClick={handleCopy}>
-                {copied ? '✓ Copied!' : 'Copy'}
-              </button>
-            </div>
-            <pre className="admin-code"><code>{codeSnippet}</code></pre>
+          {/* Server status indicator */}
+          <div className={`admin-server-status${serverOnline === false ? ' offline' : serverOnline ? ' online' : ''}`}>
+            <span className="admin-server-dot" />
+            {serverOnline === true  && 'Admin-Server läuft — Deploy bereit.'}
+            {serverOnline === false && 'Admin-Server offline. Starte ihn über den Desktop-Shortcut.'}
+            {serverOnline === null  && 'Verbindung wird geprüft…'}
           </div>
 
-          <div className="admin-deploy-steps">
-            <div className="admin-deploy-step">
-              <span className="admin-deploy-num">1</span>
-              <span>Copy the code above</span>
-            </div>
-            <div className="admin-deploy-step">
-              <span className="admin-deploy-num">2</span>
-              <span>Open <code>src/config/features.js</code> in your editor</span>
-            </div>
-            <div className="admin-deploy-step">
-              <span className="admin-deploy-num">3</span>
-              <span>Replace the <code>const DEFAULTS = &#123;…&#125;</code> block</span>
-            </div>
-            <div className="admin-deploy-step">
-              <span className="admin-deploy-num">4</span>
-              <span>Commit &amp; push → Vercel deploys in ~60 seconds</span>
-            </div>
+          {/* One-click deploy button */}
+          <div className="admin-deploy-cta">
+            <button
+              className={`adm-btn adm-btn-deploy${deployStatus === 'deploying' ? ' is-deploying' : ''}`}
+              onClick={handleDeploy}
+              disabled={deployStatus === 'deploying' || serverOnline === false}
+            >
+              {deployStatus === 'deploying' ? '⏳  Deploying…' : '🚀  Jetzt deployen'}
+            </button>
+
+            {/* Status feedback */}
+            {deployStatus === 'success' && (
+              <div className="admin-deploy-status is-success">
+                ✓ Deployed! Vercel baut jetzt neu — in ~60 Sekunden live für alle Besucher.
+              </div>
+            )}
+            {deployStatus === 'no-change' && (
+              <div className="admin-deploy-status is-no-change">
+                ✓ Bereits aktuell — keine Änderungen vorhanden.
+              </div>
+            )}
+            {deployStatus && typeof deployStatus === 'object' && deployStatus.error && (
+              <div className="admin-deploy-status is-error">
+                ✗ {deployStatus.error}
+              </div>
+            )}
           </div>
+
+          {/* Manual fallback (collapsed) */}
+          <details className="admin-manual-fallback">
+            <summary>Manuell deployen (Fallback)</summary>
+            <div className="admin-manual-fallback-body">
+              <p>Falls der automatische Deploy nicht funktioniert: Code kopieren, in <code>src/config/features.js</code> einfügen und pushen.</p>
+              <div className="admin-code-block">
+                <div className="admin-code-header">
+                  <span>src/config/features.js — DEFAULTS block</span>
+                  <button className="adm-btn adm-btn-small" onClick={handleCopy}>
+                    {copied ? '✓ Kopiert!' : 'Kopieren'}
+                  </button>
+                </div>
+                <pre className="admin-code"><code>{codeSnippet}</code></pre>
+              </div>
+            </div>
+          </details>
         </section>
 
         {/* QUICK PREVIEW */}

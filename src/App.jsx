@@ -1,4 +1,5 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Footer from './components/Footer';
@@ -10,7 +11,12 @@ const isAdmin = window.location.pathname === '/admin';
 
 function App() {
   if (isAdmin) {
-    return <Admin />;
+    return (
+      <>
+        <Admin />
+        <Analytics />
+      </>
+    );
   }
 
   return (
@@ -20,6 +26,7 @@ function App() {
         <Home />
       </main>
       <Footer />
+      <Analytics />
     </div>
   );
 }

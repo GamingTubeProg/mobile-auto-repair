@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './Home.css';
 import {
   Laptop, Settings, ShieldAlert, BatteryCharging,
@@ -16,7 +16,7 @@ const services = [
     desc: 'Quick and accurate diagnostics for any vehicle issue.',
     symptoms: 'Dashboard warning lights, unknown noises, or sudden performance drops.',
     icon: <Laptop />,
-    img: '/assets/diag_laptop_no_person_1775256815028.png',
+    img: '/assets/Mobile%20Diagnostics.png',
     category: 'Diagnostic',
   },
   {
@@ -43,7 +43,7 @@ const services = [
     desc: 'Testing and replacement of vehicle batteries on the spot.',
     symptoms: 'Car won\'t start, slow engine turn-over, or flickering electronics.',
     icon: <BatteryCharging />,
-    img: '/assets/engine_no_person_1775255972730.png',
+    img: '/assets/Battery%20Replacement%20%26%20Testing.png',
     category: 'Electrical',
   },
   {
@@ -79,7 +79,7 @@ const services = [
     desc: 'Diagnose and repair suspension or steering problems to keep you in control.',
     symptoms: 'Vehicle feeling unstable, strange clunking noises over bumps, or pulling to one side.',
     icon: <Wrench />,
-    img: '/assets/brakes_no_person_1775255952995.png',
+    img: '/assets/Suspension%20%26%20Steering%20Issues.webp',
     category: 'Safety',
   },
   {
@@ -88,7 +88,7 @@ const services = [
     desc: 'Address issues with fuel pumps, injectors, and more.',
     symptoms: 'Stalling, loss of power, poor fuel economy, or failing to start despite turning over.',
     icon: <Fuel />,
-    img: '/assets/engine_original.png',
+    img: '/assets/Repair-Fuel-injection-Service.png.webp',
     category: 'Mechanical',
   },
   {
@@ -97,7 +97,7 @@ const services = [
     desc: 'Thorough diagnostics to determine shifting issues and guide repairs.',
     symptoms: 'Rough shifting, slipping gears, or hesitation during acceleration.',
     icon: <Activity />,
-    img: '/assets/tires_no_person_1775255984902.png',
+    img: '/assets/Slipping-Transmission.png',
     category: 'Diagnostic',
   },
   {
@@ -115,7 +115,7 @@ const services = [
     desc: 'Diagnosing and repairing vehicles that fail to start or crank.',
     symptoms: 'Turning the key does nothing, dashboard lights dim, clicking sound, or complete silence.',
     icon: <Zap />,
-    img: '/assets/diagnostics_no_person_1775255939503.png',
+    img: '/assets/No%20Crank_No%20Start.jpg',
     category: 'Electrical',
   },
   {
@@ -124,7 +124,7 @@ const services = [
     desc: 'Repair and replacement of failing starter motors and alternators.',
     symptoms: 'Grinding noise when starting, slow cranking, battery warning light on, or frequent jump-starts.',
     icon: <Cpu />,
-    img: '/assets/engine_no_person_1775255972730.png',
+    img: '/assets/Starter%20Motor%20%26%20Alternator%20Repairs.png',
     category: 'Electrical',
   },
 ];
@@ -170,14 +170,94 @@ const trustBadges = [
   { icon: <Clock />, label: 'Same-Day Service' },
 ];
 
-const handleSubmit = (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const service = fd.get('service') || 'Service Request';
-  const details = fd.get('details') || '';
-  const subject = encodeURIComponent(`Auto Repair Quote – ${service}`);
-  const body = encodeURIComponent(details);
-  window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
+/**
+ * Default text shown in the Quote Details textarea when no estimator
+ * data has been collected yet. Kept identical to the original copy.
+ */
+const DEFAULT_DETAILS = `Hi! I would like to request a quick quote for mobile auto repair services. Here are my details:
+
+- Vehicle Year/Make/Model:
+- Service Requested:
+- Observed Symptoms:
+- Location for On-site Service:
+- Preferred Date/Time:
+
+Thank you!`;
+
+const EMPTY_FORM = {
+  name: '',
+  vehicle: '',
+  service: '',
+  details: DEFAULT_DETAILS,
+};
+
+/**
+ * Map the Estimator category id → service-dropdown option label.
+ * Keeps Option B's prefill landing on a real <option> rather than an empty
+ * select. Anything we don't have a service entry for falls through to "Other".
+ */
+const CATEGORY_TO_SERVICE = {
+  diagnostics: 'Mobile Diagnostics',
+  nostart:     'No Start / No Crank Repairs',
+  battery:     'Battery Replacement',
+  engine:      'Engine Problems',
+  brakes:      'Brake Issues',
+  cooling:     'Cooling System Repairs',
+  transmission:'Transmission Diagnostics',
+  suspension:  'Suspension & Steering',
+  tires:       'Flat Tire Repair',
+  fuel:        'Fuel System Repairs',
+  oil:         'Oil Change',
+  electrical:  'Starter & Alternator Repairs',
+  other:       'Other',
+};
+
+/**
+ * Build the multi-line "Quote Details" body from an estimator payload.
+ * Lays out vehicle, problem, severity, symptoms, history and the
+ * preliminary price range — ready to drop straight into an email.
+ */
+const buildDetailsFromPayload = (p) => {
+  const lines = [
+    'Hi! Following up on the instant estimate I just generated on your site.',
+    '',
+    '-- VEHICLE --',
+    `Year / Make / Model: ${p.vehicle}`,
+    p.mileage ? `Mileage: ${p.mileage} km` : '',
+    '',
+    '-- PROBLEM --',
+    `Category: ${p.categoryName}`,
+    `Severity: ${p.severity}/5 — ${p.severityLabel}`,
+    p.onsetLabel ? `Onset: ${p.onsetLabel}` : '',
+  ];
+
+  if (p.symptoms && p.symptoms.length) {
+    lines.push('', '-- SYMPTOMS --');
+    p.symptoms.forEach(s => lines.push(`• ${s}`));
+  }
+  if (p.otherSymptoms) {
+    lines.push('', `Additional notes: ${p.otherSymptoms}`);
+  }
+
+  lines.push('', '-- HISTORY --',
+    `DIY attempted: ${p.diyAttempted ? 'Yes' : 'No'}`,
+  );
+  if (p.diyAttempted && p.diyDetails) lines.push(`DIY notes: ${p.diyDetails}`);
+  lines.push(`Shop visited: ${p.shopVisited ? 'Yes' : 'No'}`);
+  if (p.shopVisited && p.shopDetails) lines.push(`Shop notes: ${p.shopDetails}`);
+
+  if (p.estimate) {
+    lines.push('',
+      '-- PRELIMINARY ESTIMATE --',
+      `$${p.estimate.low.toLocaleString()} – $${p.estimate.high.toLocaleString()} CAD`,
+    );
+  }
+
+  lines.push('',
+    'Please confirm a precise on-site quote and a time slot. Thank you!',
+  );
+
+  return lines.filter(l => l !== null && l !== undefined).join('\n');
 };
 
 /**
@@ -215,6 +295,60 @@ const useScrollReveal = (rootRef) => {
 const Home = () => {
   const rootRef = useRef(null);
   useScrollReveal(rootRef);
+
+  // Controlled contact-form state. Starts empty; gets populated when the
+  // user picks "Option B" inside the Estimator (or when they type manually).
+  const [contactForm, setContactForm] = useState(EMPTY_FORM);
+
+  // Brief highlight of the contact panel after auto-prefill, so the user
+  // sees that something happened post-scroll.
+  const [justPrefilled, setJustPrefilled] = useState(false);
+
+  const updateContact = (patch) => setContactForm(f => ({ ...f, ...patch }));
+
+  /**
+   * Called by the Estimator when the user picks Option B.
+   * 1. Prefill every relevant contact-form field from the payload.
+   * 2. Smooth-scroll to #contact.
+   * 3. Pulse a "filled in" highlight for ~2.5s.
+   */
+  const handleRequestPreciseQuote = (payload) => {
+    setContactForm({
+      name: '', // we still want them to type their name
+      vehicle: payload.vehicle + (payload.mileage ? ` · ${payload.mileage} km` : ''),
+      service: CATEGORY_TO_SERVICE[payload.categoryId] || 'Other',
+      details: buildDetailsFromPayload(payload),
+    });
+    setJustPrefilled(true);
+    // wait one tick so the DOM updates before scrolling
+    requestAnimationFrame(() => {
+      const el = document.getElementById('contact');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    setTimeout(() => setJustPrefilled(false), 2800);
+  };
+
+  /**
+   * Submit the contact form — opens user's mail client with a pre-filled
+   * message addressed to the workshop. Uses controlled state, so
+   * estimator-prefilled values flow through unchanged.
+   */
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const subject = encodeURIComponent(
+      `Auto Repair Quote – ${contactForm.service || 'Service Request'}`
+    );
+    const body = encodeURIComponent(
+      [
+        `Name: ${contactForm.name}`,
+        `Vehicle: ${contactForm.vehicle}`,
+        `Service: ${contactForm.service}`,
+        '',
+        contactForm.details,
+      ].join('\n')
+    );
+    window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
+  };
 
   return (
     <div className="home-matte" ref={rootRef}>
@@ -352,7 +486,7 @@ const Home = () => {
             </p>
           </header>
           <div data-reveal>
-            <Estimator />
+            <Estimator onRequestPreciseQuote={handleRequestPreciseQuote} />
           </div>
         </div>
       </section>
@@ -416,19 +550,47 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="contact-form-block" data-reveal>
+        <div className={`contact-form-block${justPrefilled ? ' is-prefilled' : ''}`} data-reveal>
+          {justPrefilled && (
+            <div className="contact-prefill-banner">
+              <CheckCircle2 />
+              <span>Prefilled from your estimate — just add your name and submit.</span>
+            </div>
+          )}
           <form className="brutalist-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="f-name">Full Name</label>
-              <input id="f-name" name="name" type="text" placeholder="John Doe" required />
+              <input
+                id="f-name"
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                required
+                value={contactForm.name}
+                onChange={e => updateContact({ name: e.target.value })}
+              />
             </div>
             <div className="form-group">
               <label htmlFor="f-vehicle">Vehicle Specs</label>
-              <input id="f-vehicle" name="vehicle" type="text" placeholder="Year / Make / Model" required />
+              <input
+                id="f-vehicle"
+                name="vehicle"
+                type="text"
+                placeholder="Year / Make / Model"
+                required
+                value={contactForm.vehicle}
+                onChange={e => updateContact({ vehicle: e.target.value })}
+              />
             </div>
             <div className="form-group">
               <label htmlFor="f-service">Requested Service</label>
-              <select id="f-service" name="service" required defaultValue="">
+              <select
+                id="f-service"
+                name="service"
+                required
+                value={contactForm.service}
+                onChange={e => updateContact({ service: e.target.value })}
+              >
                 <option value="" disabled hidden>Select Issue...</option>
                 {services.map(s => (
                   <option key={s.id} value={s.title}>{s.title}</option>
@@ -441,9 +603,10 @@ const Home = () => {
               <textarea
                 id="f-details"
                 name="details"
-                rows="6"
-                defaultValue={`Hi! I would like to request a quick quote for mobile auto repair services. Here are my details:\n\n- Vehicle Year/Make/Model: \n- Service Requested: \n- Observed Symptoms: \n- Location for On-site Service: \n- Preferred Date/Time: \n\nThank you!`}
-              ></textarea>
+                rows="8"
+                value={contactForm.details}
+                onChange={e => updateContact({ details: e.target.value })}
+              />
             </div>
             <button type="submit" className="btn btn-primary submit-btn btn-arrow">
               Submit Request

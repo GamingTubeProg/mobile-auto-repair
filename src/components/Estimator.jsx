@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Car, Wrench, FileText, ClipboardCheck,
-  ChevronLeft, ChevronRight, Check, Loader2,
+  Car, Wrench, FileText, Sparkles,
+  ChevronLeft, Check, Loader2,
   Laptop, Zap, BatteryCharging, Settings, ShieldAlert,
   ThermometerSnowflake, Activity, Droplet, Fuel, Cpu,
-  Shield, Clock, MapPin,
+  Shield, Clock, MapPin, Mail, ClipboardCheck,
 } from 'lucide-react';
 import { getMakes, getModels, getYearRange } from '../utils/nhtsa';
 import {
   problemCategories,
   onsetOptions,
   severityLabels,
-  contactTimeOptions,
   buildEstimateRange,
 } from '../data/estimatorData';
 import './Estimator.css';
@@ -20,7 +19,7 @@ const STEPS = [
   { id: 'vehicle', label: 'Vehicle',  icon: <Car /> },
   { id: 'problem', label: 'Problem',  icon: <Wrench /> },
   { id: 'details', label: 'Details',  icon: <FileText /> },
-  { id: 'review',  label: 'Review',   icon: <ClipboardCheck /> },
+  { id: 'result',  label: 'Result',   icon: <Sparkles /> },
 ];
 
 // Lookup table so categories can reference icons by string name (keeps the
@@ -54,17 +53,21 @@ const INITIAL_FORM = {
   diyDetails: '',
   shopVisited: false,
   shopDetails: '',
-  name: '',
-  email: '',
-  phone: '',
-  contactTime: 'Anytime',
-  location: '',
 };
 
-const Estimator = () => {
+/**
+ * Estimator wizard.
+ *
+ * Props:
+ *   onRequestPreciseQuote(payload)
+ *     Called when the user picks Option B on the result page.
+ *     The parent should prefill its main contact form and scroll to it.
+ *     Payload contains everything the customer entered + the calculated estimate.
+ */
+const Estimator = ({ onRequestPreciseQuote }) => {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
-  const [submitted, setSubmitted] = useState(false);
+  const [optionAStatus, setOptionAStatus] = useState(null); // null | 'sent'
 
   // NHTSA data
   const years = useMemo(() => getYearRange(), []);
@@ -132,8 +135,7 @@ const Estimator = () => {
     if (step === 0) return form.year && form.make && form.model;
     if (step === 1) return !!form.categoryId;
     if (step === 2) return form.symptoms.length > 0 || form.otherSymptoms.trim().length > 0;
-    if (step === 3) return form.name && form.email;
-    return false;
+    return true;
   };
 
   const next = () => { if (canProceed() && step < STEPS.length - 1) setStep(s => s + 1); };
@@ -142,54 +144,77 @@ const Estimator = () => {
   const reset = () => {
     setForm(INITIAL_FORM);
     setStep(0);
-    setSubmitted(false);
+    setOptionAStatus(null);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const lines = [
-      '=== ESTIMATE REQUEST ===',
+  /**
+   * Build a serialisable summary of the customer's inputs, used both for
+   * Option A (mailto subject/body) and Option B (parent prefill payload).
+   */
+  const buildPayload = () => ({
+    year: form.year,
+    make: form.make,
+    model: form.model,
+    vehicle: `${form.year} ${form.make} ${form.model}`.trim(),
+    mileage: form.mileage,
+    categoryId: form.categoryId,
+    categoryName: activeCategory?.name || '',
+    symptoms: form.symptoms,
+    otherSymptoms: form.otherSymptoms,
+    severity: form.severity,
+    severityLabel: severityLabels[form.severity - 1],
+    onset: form.onset,
+    onsetLabel: onsetOptions.find(o => o.value === form.onset)?.label || '',
+    diyAttempted: form.diyAttempted,
+    diyDetails: form.diyDetails,
+    shopVisited: form.shopVisited,
+    shopDetails: form.shopDetails,
+    estimate,
+  });
+
+  /**
+   * Format the estimate as plain-text the customer can paste anywhere.
+   * Used by Option A (email-me-this-estimate).
+   */
+  const formatEstimateText = () => {
+    const p = buildPayload();
+    return [
+      '=== YOUR INSTANT ESTIMATE ===',
       '',
-      '-- CUSTOMER --',
-      `Name:      ${form.name}`,
-      `Email:     ${form.email}`,
-      `Phone:     ${form.phone || '—'}`,
-      `Location:  ${form.location || '—'}`,
-      `Contact:   ${form.contactTime}`,
-      '',
-      '-- VEHICLE --',
-      `Year:      ${form.year}`,
-      `Make:      ${form.make}`,
-      `Model:     ${form.model}`,
-      `Mileage:   ${form.mileage || '—'} km`,
-      '',
-      '-- PROBLEM --',
-      `Category:  ${activeCategory ? activeCategory.name : form.categoryId}`,
-      `Severity:  ${form.severity}/5 — ${severityLabels[form.severity - 1]}`,
-      `Onset:     ${onsetOptions.find(o => o.value === form.onset)?.label || '—'}`,
+      `Vehicle:   ${p.vehicle}${p.mileage ? ` · ${p.mileage} km` : ''}`,
+      `Issue:     ${p.categoryName}`,
+      `Severity:  ${p.severity}/5 — ${p.severityLabel}`,
+      p.onsetLabel ? `Onset:     ${p.onsetLabel}` : '',
       '',
       '-- SYMPTOMS --',
-      ...form.symptoms.map(s => `• ${s}`),
-      form.otherSymptoms ? `\nAdditional:\n${form.otherSymptoms}` : '',
-      '',
-      '-- HISTORY --',
-      `DIY attempted: ${form.diyAttempted ? 'Yes' : 'No'}`,
-      form.diyAttempted && form.diyDetails ? `DIY notes: ${form.diyDetails}` : '',
-      `Shop visited:  ${form.shopVisited ? 'Yes' : 'No'}`,
-      form.shopVisited && form.shopDetails ? `Shop notes: ${form.shopDetails}` : '',
+      ...p.symptoms.map(s => `• ${s}`),
+      p.otherSymptoms ? `\nAdditional notes:\n${p.otherSymptoms}` : '',
       '',
       '-- PRELIMINARY ESTIMATE --',
-      estimate ? `$${estimate.low} – $${estimate.high} CAD (on-site labour + common parts)` : '',
+      p.estimate ? `$${p.estimate.low.toLocaleString()} – $${p.estimate.high.toLocaleString()} CAD` : '',
+      'Final pricing is confirmed after on-site diagnostic.',
       '',
-      'Please confirm availability and send a final quote. Thank you!',
+      '---',
+      'Mobile Auto Repair · London, ON',
+      '519-617-7214 · Mobile.Automotive@hotmail.com',
     ].filter(Boolean).join('\n');
+  };
 
+  /** Option A: email this estimate to the user (mailto with no recipient). */
+  const handleOptionA = () => {
     const subject = encodeURIComponent(
-      `Estimate Request — ${form.year} ${form.make} ${form.model} — ${activeCategory?.name || 'Service'}`
+      `My Auto Repair Estimate — ${form.year} ${form.make} ${form.model}`
     );
-    const body = encodeURIComponent(lines);
-    window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    const body = encodeURIComponent(formatEstimateText());
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    setOptionAStatus('sent');
+  };
+
+  /** Option B: ask parent to prefill the main contact form & scroll there. */
+  const handleOptionB = () => {
+    if (typeof onRequestPreciseQuote === 'function') {
+      onRequestPreciseQuote(buildPayload());
+    }
   };
 
   return (
@@ -228,294 +253,307 @@ const Estimator = () => {
         ))}
       </div>
 
-      {submitted ? (
-        <div className="est-success">
-          <div className="est-success-icon"><Check /></div>
-          <h4>Request sent.</h4>
-          <p>
-            Your email client just opened with a pre-filled message. Hit <b>Send</b>
-            and we&apos;ll confirm your on-site slot within a few business hours.
-          </p>
-          <div className="est-success-actions">
-            <a href="tel:519-617-7214" className="btn btn-primary">Or call 519-617-7214</a>
-            <button className="btn btn-ghost" onClick={reset}>Start another estimate</button>
-          </div>
-        </div>
-      ) : (
-        <form className="est-body" onSubmit={handleSubmit}>
-          {/* STEP 1: VEHICLE */}
-          {step === 0 && (
-            <div className="est-panel">
-              <h4 className="est-panel-title">Tell us about your vehicle.</h4>
-              <p className="est-panel-hint">
-                Model list is pulled live from the NHTSA vPIC database — 10&#8239;000+ makes, every model year.
-              </p>
+      <div className="est-body">
+        {/* STEP 1: VEHICLE */}
+        {step === 0 && (
+          <div className="est-panel">
+            <h4 className="est-panel-title">Tell us about your vehicle.</h4>
+            <p className="est-panel-hint">
+              Model list is pulled live from the NHTSA vPIC database — 10&#8239;000+ makes, every model year.
+            </p>
 
-              <div className="est-grid">
-                <div className="est-field">
-                  <label>Model Year</label>
-                  <select value={form.year} onChange={e => update({ year: e.target.value, make: '', model: '' })}>
-                    <option value="" disabled hidden>Select year...</option>
-                    {years.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-
-                <div className="est-field">
-                  <label>Make {makesLoading && <Loader2 className="spin-icon" />}</label>
-                  <select
-                    value={form.make}
-                    onChange={e => update({ make: e.target.value, model: '' })}
-                    disabled={!form.year || makesLoading}
-                  >
-                    <option value="" disabled hidden>Select make...</option>
-                    {makes.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-
-                <div className="est-field">
-                  <label>Model {modelsLoading && <Loader2 className="spin-icon" />}</label>
-                  {models.length > 0 ? (
-                    <select
-                      value={form.model}
-                      onChange={e => update({ model: e.target.value })}
-                      disabled={!form.make || modelsLoading}
-                    >
-                      <option value="" disabled hidden>Select model...</option>
-                      {models.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder={form.make ? 'Type your model (e.g. 3 Series)' : 'Pick a make first'}
-                      value={form.model}
-                      onChange={e => update({ model: e.target.value })}
-                      disabled={!form.make || modelsLoading}
-                    />
-                  )}
-                </div>
-
-                <div className="est-field">
-                  <label>Mileage (km) — optional</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 142000"
-                    value={form.mileage}
-                    onChange={e => update({ mileage: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: PROBLEM */}
-          {step === 1 && (
-            <div className="est-panel">
-              <h4 className="est-panel-title">What&apos;s the issue?</h4>
-              <p className="est-panel-hint">Pick the closest match — you&apos;ll add specifics next.</p>
-
-              <div className="est-categories">
-                {problemCategories.map(cat => (
-                  <button
-                    type="button"
-                    key={cat.id}
-                    className={`est-category-card${form.categoryId === cat.id ? ' selected' : ''}`}
-                    onClick={() => update({ categoryId: cat.id, symptoms: [] })}
-                  >
-                    <span className="est-category-icon">{iconMap[cat.icon] || <Wrench />}</span>
-                    <span className="est-category-name">{cat.name}</span>
-                    <span className="est-category-range">${cat.estimate.low} – ${cat.estimate.high}</span>
-                    <span className="est-category-desc">{cat.description}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: DETAILS */}
-          {step === 2 && activeCategory && (
-            <div className="est-panel">
-              <h4 className="est-panel-title">Details for: <span className="title-accent">{activeCategory.name}</span></h4>
-              <p className="est-panel-hint">Check every symptom you&apos;re seeing. More detail = tighter quote.</p>
-
-              <div className="est-symptoms">
-                {activeCategory.symptoms.map(s => (
-                  <label
-                    key={s}
-                    className={`est-symptom${form.symptoms.includes(s) ? ' checked' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.symptoms.includes(s)}
-                      onChange={() => toggleSymptom(s)}
-                    />
-                    <span className="est-symptom-check"><Check /></span>
-                    <span>{s}</span>
-                  </label>
-                ))}
+            <div className="est-grid">
+              <div className="est-field">
+                <label>Model Year</label>
+                <select value={form.year} onChange={e => update({ year: e.target.value, make: '', model: '' })}>
+                  <option value="" disabled hidden>Select year...</option>
+                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
               </div>
 
               <div className="est-field">
-                <label>Anything else? (optional)</label>
-                <textarea
-                  rows="3"
-                  placeholder="Describe the noise, smell, or behaviour in your own words..."
-                  value={form.otherSymptoms}
-                  onChange={e => update({ otherSymptoms: e.target.value })}
-                />
+                <label>Make {makesLoading && <Loader2 className="spin-icon" />}</label>
+                <select
+                  value={form.make}
+                  onChange={e => update({ make: e.target.value, model: '' })}
+                  disabled={!form.year || makesLoading}
+                >
+                  <option value="" disabled hidden>Select make...</option>
+                  {makes.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
 
-              <div className="est-grid">
-                <div className="est-field">
-                  <label>How long has this been happening?</label>
-                  <select value={form.onset} onChange={e => update({ onset: e.target.value })}>
-                    <option value="" disabled hidden>Select...</option>
-                    {onsetOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <div className="est-field">
+                <label>Model {modelsLoading && <Loader2 className="spin-icon" />}</label>
+                {models.length > 0 ? (
+                  <select
+                    value={form.model}
+                    onChange={e => update({ model: e.target.value })}
+                    disabled={!form.make || modelsLoading}
+                  >
+                    <option value="" disabled hidden>Select model...</option>
+                    {models.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
-                </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder={form.make ? 'Type your model (e.g. 3 Series)' : 'Pick a make first'}
+                    value={form.model}
+                    onChange={e => update({ model: e.target.value })}
+                    disabled={!form.make || modelsLoading}
+                  />
+                )}
+              </div>
 
-                <div className="est-field">
-                  <label>How severe does it feel?</label>
-                  <div className="est-severity">
-                    <input
-                      type="range"
-                      min="1"
-                      max="5"
-                      value={form.severity}
-                      onChange={e => update({ severity: parseInt(e.target.value, 10) })}
-                    />
-                    <div className="est-severity-readout">
-                      <span className="est-severity-num">{form.severity}/5</span>
-                      <span className="est-severity-text">{severityLabels[form.severity - 1]}</span>
-                    </div>
+              <div className="est-field">
+                <label>Mileage (km) — optional</label>
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  placeholder="e.g. 142000"
+                  value={form.mileage}
+                  onChange={e => update({ mileage: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: PROBLEM */}
+        {step === 1 && (
+          <div className="est-panel">
+            <h4 className="est-panel-title">What&apos;s the issue?</h4>
+            <p className="est-panel-hint">Pick the closest match — you&apos;ll add specifics next.</p>
+
+            <div className="est-categories">
+              {problemCategories.map(cat => (
+                <button
+                  type="button"
+                  key={cat.id}
+                  className={`est-category-card${form.categoryId === cat.id ? ' selected' : ''}`}
+                  onClick={() => update({ categoryId: cat.id, symptoms: [] })}
+                >
+                  <span className="est-category-icon">{iconMap[cat.icon] || <Wrench />}</span>
+                  <span className="est-category-name">{cat.name}</span>
+                  <span className="est-category-range">${cat.estimate.low} – ${cat.estimate.high}</span>
+                  <span className="est-category-desc">{cat.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: DETAILS */}
+        {step === 2 && activeCategory && (
+          <div className="est-panel">
+            <h4 className="est-panel-title">Details for: <span className="title-accent">{activeCategory.name}</span></h4>
+            <p className="est-panel-hint">Check every symptom you&apos;re seeing. More detail = tighter quote.</p>
+
+            <div className="est-symptoms">
+              {activeCategory.symptoms.map(s => (
+                <label
+                  key={s}
+                  className={`est-symptom${form.symptoms.includes(s) ? ' checked' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.symptoms.includes(s)}
+                    onChange={() => toggleSymptom(s)}
+                  />
+                  <span className="est-symptom-check"><Check /></span>
+                  <span>{s}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="est-field">
+              <label>Anything else? (optional)</label>
+              <textarea
+                rows="3"
+                placeholder="Describe the noise, smell, or behaviour in your own words..."
+                value={form.otherSymptoms}
+                onChange={e => update({ otherSymptoms: e.target.value })}
+              />
+            </div>
+
+            <div className="est-grid">
+              <div className="est-field">
+                <label>How long has this been happening?</label>
+                <select value={form.onset} onChange={e => update({ onset: e.target.value })}>
+                  <option value="" disabled hidden>Select...</option>
+                  {onsetOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+
+              <div className="est-field">
+                <label>How severe does it feel?</label>
+                <div className="est-severity">
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={form.severity}
+                    onChange={e => update({ severity: parseInt(e.target.value, 10) })}
+                  />
+                  <div className="est-severity-readout">
+                    <span className="est-severity-num">{form.severity}/5</span>
+                    <span className="est-severity-text">{severityLabels[form.severity - 1]}</span>
                   </div>
                 </div>
               </div>
-
-              <div className="est-checks">
-                <label className={`est-check-row${form.diyAttempted ? ' checked' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={form.diyAttempted}
-                    onChange={e => update({ diyAttempted: e.target.checked })}
-                  />
-                  <span className="est-symptom-check"><Check /></span>
-                  <span>I&apos;ve already attempted a DIY repair</span>
-                </label>
-                {form.diyAttempted && (
-                  <textarea
-                    rows="2"
-                    placeholder="What did you try? (parts swapped, tests done, etc.)"
-                    value={form.diyDetails}
-                    onChange={e => update({ diyDetails: e.target.value })}
-                  />
-                )}
-
-                <label className={`est-check-row${form.shopVisited ? ' checked' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={form.shopVisited}
-                    onChange={e => update({ shopVisited: e.target.checked })}
-                  />
-                  <span className="est-symptom-check"><Check /></span>
-                  <span>Another shop has already looked at it</span>
-                </label>
-                {form.shopVisited && (
-                  <textarea
-                    rows="2"
-                    placeholder="What did they say or do?"
-                    value={form.shopDetails}
-                    onChange={e => update({ shopDetails: e.target.value })}
-                  />
-                )}
-              </div>
             </div>
-          )}
 
-          {/* STEP 4: REVIEW */}
-          {step === 3 && (
-            <div className="est-panel">
-              <h4 className="est-panel-title">Your preliminary estimate.</h4>
-
-              {estimate && (
-                <div className="est-quote">
-                  <span className="est-quote-label">On-site labour + common parts (CAD)</span>
-                  <span className="est-quote-price">
-                    ${estimate.low.toLocaleString()} – ${estimate.high.toLocaleString()}
-                  </span>
-                  <span className="est-quote-hint">
-                    Category typical range: ${estimate.catLow} – ${estimate.catHigh}.
-                    Final pricing confirmed after on-site diagnostic — no surprises.
-                  </span>
-                </div>
+            <div className="est-checks">
+              <label className={`est-check-row${form.diyAttempted ? ' checked' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={form.diyAttempted}
+                  onChange={e => update({ diyAttempted: e.target.checked })}
+                />
+                <span className="est-symptom-check"><Check /></span>
+                <span>I&apos;ve already attempted a DIY repair</span>
+              </label>
+              {form.diyAttempted && (
+                <textarea
+                  rows="2"
+                  placeholder="What did you try? (parts swapped, tests done, etc.)"
+                  value={form.diyDetails}
+                  onChange={e => update({ diyDetails: e.target.value })}
+                />
               )}
 
-              <div className="est-summary">
-                <div className="est-summary-row">
-                  <span>Vehicle</span>
-                  <span>{form.year} {form.make} {form.model}{form.mileage ? ` · ${form.mileage} km` : ''}</span>
-                </div>
-                <div className="est-summary-row">
-                  <span>Issue</span>
-                  <span>{activeCategory?.name}</span>
-                </div>
-                <div className="est-summary-row">
-                  <span>Severity</span>
-                  <span>{form.severity}/5 — {severityLabels[form.severity - 1]}</span>
-                </div>
-                <div className="est-summary-row">
-                  <span>Symptoms</span>
-                  <span>{form.symptoms.length} checked{form.otherSymptoms ? ' + notes' : ''}</span>
-                </div>
-              </div>
+              <label className={`est-check-row${form.shopVisited ? ' checked' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={form.shopVisited}
+                  onChange={e => update({ shopVisited: e.target.checked })}
+                />
+                <span className="est-symptom-check"><Check /></span>
+                <span>Another shop has already looked at it</span>
+              </label>
+              {form.shopVisited && (
+                <textarea
+                  rows="2"
+                  placeholder="What did they say or do?"
+                  value={form.shopDetails}
+                  onChange={e => update({ shopDetails: e.target.value })}
+                />
+              )}
+            </div>
+          </div>
+        )}
 
-              <h5 className="est-subhead">Where do we send the final quote?</h5>
-              <div className="est-grid">
-                <div className="est-field">
-                  <label>Full Name *</label>
-                  <input type="text" required value={form.name} onChange={e => update({ name: e.target.value })} placeholder="John Smith" />
-                </div>
-                <div className="est-field">
-                  <label>Email *</label>
-                  <input type="email" required value={form.email} onChange={e => update({ email: e.target.value })} placeholder="you@example.com" />
-                </div>
-                <div className="est-field">
-                  <label>Phone</label>
-                  <input type="tel" value={form.phone} onChange={e => update({ phone: e.target.value })} placeholder="519-555-0100" />
-                </div>
-                <div className="est-field">
-                  <label>Best Time to Reach You</label>
-                  <select value={form.contactTime} onChange={e => update({ contactTime: e.target.value })}>
-                    {contactTimeOptions.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div className="est-field est-field-full">
-                  <label>Service Location (street / city)</label>
-                  <input type="text" value={form.location} onChange={e => update({ location: e.target.value })} placeholder="e.g. 123 Wellington St, London ON" />
-                </div>
+        {/* STEP 4: RESULT — Option A / Option B */}
+        {step === 3 && (
+          <div className="est-panel">
+            <h4 className="est-panel-title">
+              Your <span className="title-accent">Instant Estimate.</span>
+            </h4>
+            <p className="est-panel-hint">
+              Calculated from your vehicle, severity and symptoms. Pick your next step below.
+            </p>
+
+            {estimate && (
+              <div className="est-quote">
+                <span className="est-quote-label">On-site labour + common parts (CAD)</span>
+                <span className="est-quote-price">
+                  ${estimate.low.toLocaleString()} – ${estimate.high.toLocaleString()}
+                </span>
+                <span className="est-quote-hint">
+                  Category typical range: ${estimate.catLow} – ${estimate.catHigh}.
+                  Final pricing is confirmed only after an on-site diagnostic — no surprises.
+                </span>
+              </div>
+            )}
+
+            <div className="est-summary">
+              <div className="est-summary-row">
+                <span>Vehicle</span>
+                <span>{form.year} {form.make} {form.model}{form.mileage ? ` · ${form.mileage} km` : ''}</span>
+              </div>
+              <div className="est-summary-row">
+                <span>Issue</span>
+                <span>{activeCategory?.name}</span>
+              </div>
+              <div className="est-summary-row">
+                <span>Severity</span>
+                <span>{form.severity}/5 — {severityLabels[form.severity - 1]}</span>
+              </div>
+              <div className="est-summary-row">
+                <span>Symptoms</span>
+                <span>{form.symptoms.length} checked{form.otherSymptoms ? ' + notes' : ''}</span>
               </div>
             </div>
-          )}
 
-          {/* NAVIGATION */}
+            {/* OPTION A / OPTION B CHOICE CARDS */}
+            <h5 className="est-subhead">Choose how to proceed</h5>
+            <div className="est-choice-grid">
+              {/* OPTION A */}
+              <div className={`est-choice-card${optionAStatus === 'sent' ? ' is-sent' : ''}`}>
+                <span className="est-choice-tag">Option A</span>
+                <span className="est-choice-icon"><Mail /></span>
+                <h5>Save This Estimate</h5>
+                <p>
+                  Email yourself a copy of this preliminary estimate so you can review it later.
+                  No commitment, no contact request.
+                </p>
+                {optionAStatus === 'sent' ? (
+                  <span className="est-choice-confirm">
+                    <Check /> Email opened in your client.
+                  </span>
+                ) : (
+                  <button type="button" className="btn btn-ghost est-choice-cta" onClick={handleOptionA}>
+                    <Mail /> Email this estimate to me
+                  </button>
+                )}
+              </div>
+
+              {/* OPTION B */}
+              <div className="est-choice-card est-choice-card-primary">
+                <span className="est-choice-tag">Option B · Recommended</span>
+                <span className="est-choice-icon"><ClipboardCheck /></span>
+                <h5>Get a Precise On-Site Quote</h5>
+                <p>
+                  Continue to a short contact form (your details below are already filled in)
+                  and we&apos;ll send a binding quote and book a time.
+                </p>
+                <button type="button" className="btn btn-primary btn-arrow est-choice-cta" onClick={handleOptionB}>
+                  Request precise quote
+                  <span className="btn-arrow-icon">→</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="est-result-extra">
+              <button type="button" className="est-link-btn" onClick={reset}>
+                ← Start a new estimate
+              </button>
+              <a href="tel:519-617-7214" className="est-link-btn">
+                Or call directly: 519-617-7214
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* NAVIGATION (steps 1–3 only) */}
+        {step < 3 && (
           <div className="est-nav">
             <button type="button" className="btn btn-ghost" onClick={prev} disabled={step === 0}>
               <ChevronLeft /> Back
             </button>
-            {step < STEPS.length - 1 ? (
-              <button type="button" className="btn btn-primary btn-arrow" onClick={next} disabled={!canProceed()}>
-                Next: {STEPS[step + 1].label}
-                <span className="btn-arrow-icon">→</span>
-              </button>
-            ) : (
-              <button type="submit" className="btn btn-primary btn-arrow" disabled={!canProceed()}>
-                Send Estimate Request
-                <span className="btn-arrow-icon">→</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn-primary btn-arrow"
+              onClick={next}
+              disabled={!canProceed()}
+            >
+              Next: {STEPS[step + 1].label}
+              <span className="btn-arrow-icon">→</span>
+            </button>
           </div>
-        </form>
-      )}
+        )}
+      </div>
     </div>
   );
 };

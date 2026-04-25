@@ -4,7 +4,7 @@ import {
   ChevronLeft, Check, Loader2,
   Laptop, Zap, BatteryCharging, Settings, ShieldAlert,
   ThermometerSnowflake, Activity, Droplet, Fuel, Cpu,
-  Shield, Clock, Phone, ClipboardCheck,
+  Shield, Clock, ClipboardCheck, Phone,
 } from 'lucide-react';
 import { getMakes, getModels, getYearRange } from '../utils/nhtsa';
 import {
@@ -166,7 +166,7 @@ const Estimator = ({ onRequestPreciseQuote }) => {
         <div className="est-head-trust">
           <div><Shield /><span>No obligation</span></div>
           <div><Clock /><span>90-second form</span></div>
-          <div><Phone /><span>Precise quote via phone or written</span></div>
+          <div><Phone /><span>Precise quote before work begins</span></div>
         </div>
       </div>
 
@@ -367,8 +367,8 @@ const Estimator = ({ onRequestPreciseQuote }) => {
             </h4>
             <p className="est-panel-hint">
               {FEATURES.ESTIMATOR_SHOW_PRICE
-                ? 'Based on your vehicle, severity and symptoms. A precise quote is confirmed via phone or in writing.'
-                : 'Your details are ready. Request a precise quote and we\'ll contact you directly.'}
+                ? 'Based on your vehicle, severity and symptoms. A precise quote is confirmed before work begins — the final price may vary slightly on-site.'
+                : 'Your details are ready. Send a quote request and we\'ll get back to you with a precise price.'}
             </p>
 
             {/* Price range — only if toggle is on */}
@@ -379,8 +379,9 @@ const Estimator = ({ onRequestPreciseQuote }) => {
                   ${estimate.low.toLocaleString()} – ${estimate.high.toLocaleString()}
                 </span>
                 <span className="est-quote-hint">
-                  Category typical range: ${estimate.catLow} – ${estimate.catHigh}.{' '}
-                  A precise quote is provided via phone or in writing — no surprises.
+                  Typical range for this category: ${estimate.catLow} – ${estimate.catHigh}.
+                  A precise quote is confirmed before any work begins.
+                  The final price may vary slightly based on what we find on-site — you always approve first.
                 </span>
               </div>
             )}
@@ -411,8 +412,9 @@ const Estimator = ({ onRequestPreciseQuote }) => {
                 <div className="est-single-cta-text">
                   <h5>Request a Precise Quote</h5>
                   <p>
-                    Your details above are already filled in. We&apos;ll confirm a final, binding
-                    price via phone or in writing — and book your on-site appointment.
+                    Your details above are already filled in. We&apos;ll send a precise quote
+                    before any work begins. The final price may adjust slightly based on what
+                    we find on-site — you always approve it first.
                   </p>
                 </div>
                 <button

@@ -233,7 +233,7 @@ const buildDetailsFromPayload = (p) => {
   }
 
   lines.push('',
-    'Please confirm a precise on-site quote and a time slot. Thank you!',
+    'Please send a precise quote before work begins. I understand the final price may vary slightly on-site. Thank you!',
   );
 
   return lines.filter(l => l !== null && l !== undefined).join('\n');

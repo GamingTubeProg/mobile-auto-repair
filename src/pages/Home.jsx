@@ -276,7 +276,9 @@ const Home = () => {
   useScrollReveal(rootRef);
 
   // Controlled contact-form state.
-  const [contactForm, setContactForm] = useState(EMPTY_FORM);
+  const [contactForm,  setContactForm]  = useState(EMPTY_FORM);
+  const [submitting,   setSubmitting]   = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // null | 'success' | 'error'
 
   // Once the user navigates to the contact section via Option B, we keep
   // is-visible permanently in React's className so no subsequent re-render
@@ -313,22 +315,35 @@ const Home = () => {
   };
 
   /**
-   * Submit the contact form via mailto.
+   * Submit the contact form — POST to /api/send-email (Vercel serverless).
+   * No email client popup; the email is sent server-side via Resend.
    */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const vehicle = contactForm.vehicle || 'Vehicle not specified';
-    const subject = encodeURIComponent(`Precise Quote Request – ${vehicle}`);
-    const body = encodeURIComponent(
-      [
-        `Name:    ${contactForm.name}`,
-        `Phone:   ${contactForm.phone}`,
-        `Vehicle: ${vehicle}`,
-        '',
-        contactForm.details,
-      ].join('\n')
-    );
-    window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
+    setSubmitting(true);
+    setSubmitStatus(null);
+    try {
+      const res = await fetch('/api/send-email', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          name:    contactForm.name,
+          phone:   contactForm.phone,
+          vehicle: contactForm.vehicle || 'Not specified',
+          details: contactForm.details,
+        }),
+      });
+      if (res.ok) {
+        setSubmitStatus('success');
+        setContactForm(EMPTY_FORM);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch {
+      setSubmitStatus('error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -594,10 +609,26 @@ const Home = () => {
                 onChange={e => updateContact({ details: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary submit-btn btn-arrow">
-              Submit Request
-              <span className="btn-arrow-icon">→</span>
+            <button
+              type="submit"
+              className="btn btn-primary submit-btn btn-arrow"
+              disabled={submitting}
+            >
+              {submitting ? 'Sending…' : 'Submit Request'}
+              {!submitting && <span className="btn-arrow-icon">→</span>}
             </button>
+
+            {submitStatus === 'success' && (
+              <div className="form-status form-status-success">
+                <CheckCircle2 size={18} />
+                <span>Request sent! We'll be in touch shortly with your precise quote.</span>
+              </div>
+            )}
+            {submitStatus === 'error' && (
+              <div className="form-status form-status-error">
+                <span>Something went wrong — please call us directly at <strong>519-617-7214</strong>.</span>
+              </div>
+            )}
           </form>
         </div>
       </section>

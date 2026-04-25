@@ -695,10 +695,17 @@
 @media (max-width: 700px) {
   .est-single-cta-card {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 1.25rem;
+    overflow: hidden;
   }
-  .est-single-cta-btn { width: 100%; justify-content: center; }
+  .est-single-cta-btn {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+    flex-shrink: 0;
+  }
 }
 
 /* -------- OPTION A / B CHOICE CARDS (step 4) -------- */

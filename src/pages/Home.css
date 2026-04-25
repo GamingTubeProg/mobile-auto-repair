@@ -698,6 +698,33 @@
   gap: 2.25rem;
 }
 
+/* Form submit status messages */
+.form-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border: 1px solid;
+}
+
+.form-status-success {
+  border-color: #2ecc71;
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.06);
+}
+
+.form-status-error {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.06);
+}
+
+.form-status-error strong {
+  color: #fff;
+}
+
 .form-group label {
   display: block;
   font-size: 0.85rem;

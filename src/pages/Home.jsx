@@ -8,6 +8,7 @@ import {
   Award, Clock, ShieldCheck, Star,
 } from 'lucide-react';
 import Estimator from '../components/Estimator';
+import FEATURES from '../config/features';
 
 const services = [
   {
@@ -174,7 +175,7 @@ const trustBadges = [
  * Default text shown in the Quote Details textarea when no estimator
  * data has been collected yet. Kept identical to the original copy.
  */
-const DEFAULT_DETAILS = `Hi! I would like to request a quick quote for mobile auto repair services. Here are my details:
+const DEFAULT_DETAILS = `Hi! I would like to request a precise quote for mobile auto repair services. Here are my details:
 
 - Vehicle Year/Make/Model:
 - Observed Symptoms:
@@ -185,6 +186,7 @@ Thank you!`;
 
 const EMPTY_FORM = {
   name: '',
+  phone: '',
   vehicle: '',
   details: DEFAULT_DETAILS,
 };
@@ -316,9 +318,15 @@ const Home = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const vehicle = contactForm.vehicle || 'Vehicle not specified';
-    const subject = encodeURIComponent(`Auto Repair Quote – ${vehicle}`);
+    const subject = encodeURIComponent(`Precise Quote Request – ${vehicle}`);
     const body = encodeURIComponent(
-      [`Name: ${contactForm.name}`, `Vehicle: ${vehicle}`, '', contactForm.details].join('\n')
+      [
+        `Name:    ${contactForm.name}`,
+        `Phone:   ${contactForm.phone}`,
+        `Vehicle: ${vehicle}`,
+        '',
+        contactForm.details,
+      ].join('\n')
     );
     window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
   };
@@ -447,22 +455,24 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ESTIMATOR */}
-      <section className="estimator-section section" id="estimator">
-        <div className="container">
-          <header className="process-header" data-reveal>
-            <span className="subtitle accent-line">Get an Estimate</span>
-            <h2 className="title">Instant <span className="title-accent">Quote Tool.</span></h2>
-            <p className="showroom-lede">
-              Pick your vehicle, describe the problem, and get a live price bracket — powered by the
-              NHTSA vehicle database and real Ontario repair data. No spam, no obligation.
-            </p>
-          </header>
-          <div data-reveal>
-            <Estimator onRequestPreciseQuote={handleRequestPreciseQuote} />
+      {/* ESTIMATOR — hidden when FEATURES.ESTIMATOR_ENABLED = false */}
+      {FEATURES.ESTIMATOR_ENABLED && (
+        <section className="estimator-section section" id="estimator">
+          <div className="container">
+            <header className="process-header" data-reveal>
+              <span className="subtitle accent-line">Get an Estimate</span>
+              <h2 className="title">Instant <span className="title-accent">Quote Tool.</span></h2>
+              <p className="showroom-lede">
+                Pick your vehicle, describe the problem and symptoms — then request a precise quote
+                via phone or in writing. No spam, no obligation.
+              </p>
+            </header>
+            <div data-reveal>
+              <Estimator onRequestPreciseQuote={handleRequestPreciseQuote} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ABOUT */}
       <section className="about-split" id="about">
@@ -548,6 +558,18 @@ const Home = () => {
                 required
                 value={contactForm.name}
                 onChange={e => updateContact({ name: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="f-phone">Phone Number</label>
+              <input
+                id="f-phone"
+                name="phone"
+                type="tel"
+                placeholder="519-555-0100"
+                required
+                value={contactForm.phone}
+                onChange={e => updateContact({ phone: e.target.value })}
               />
             </div>
             <div className="form-group">

@@ -649,6 +649,58 @@
   background: var(--bg-hover);
 }
 
+/* -------- SINGLE CTA (step 4 — Option B only) -------- */
+.est-single-cta {
+  margin-bottom: 2rem;
+}
+
+.est-single-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 2rem;
+  background:
+    linear-gradient(135deg, rgba(230, 92, 0, 0.12), transparent 60%),
+    var(--bg-card);
+  border: 2px solid var(--accent-primary);
+  box-shadow: inset 0 0 0 1px var(--accent-primary);
+}
+
+.est-single-cta-text {
+  flex: 1;
+}
+
+.est-single-cta-text h5 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  margin: 0 0 0.5rem;
+}
+
+.est-single-cta-text p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.est-single-cta-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 1.1rem 2rem;
+}
+
+@media (max-width: 700px) {
+  .est-single-cta-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  .est-single-cta-btn { width: 100%; justify-content: center; }
+}
+
 /* -------- OPTION A / B CHOICE CARDS (step 4) -------- */
 .est-choice-grid {
   display: grid;

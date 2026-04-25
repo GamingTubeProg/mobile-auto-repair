@@ -90,8 +90,11 @@ export default FEATURES;
 
 /* ── HTTP server ──────────────────────────────────────────── */
 const server = http.createServer((req, res) => {
-  // CORS — allow the Vite dev server origin
-  res.setHeader('Access-Control-Allow-Origin',  'http://localhost:5173');
+  // CORS — allow any localhost origin (Vite uses 5173, but IP may vary)
+  const origin = req.headers.origin || '';
+  if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

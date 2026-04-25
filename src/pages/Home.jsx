@@ -177,7 +177,6 @@ const trustBadges = [
 const DEFAULT_DETAILS = `Hi! I would like to request a quick quote for mobile auto repair services. Here are my details:
 
 - Vehicle Year/Make/Model:
-- Service Requested:
 - Observed Symptoms:
 - Location for On-site Service:
 - Preferred Date/Time:
@@ -187,29 +186,7 @@ Thank you!`;
 const EMPTY_FORM = {
   name: '',
   vehicle: '',
-  service: '',
   details: DEFAULT_DETAILS,
-};
-
-/**
- * Map the Estimator category id → service-dropdown option label.
- * Keeps Option B's prefill landing on a real <option> rather than an empty
- * select. Anything we don't have a service entry for falls through to "Other".
- */
-const CATEGORY_TO_SERVICE = {
-  diagnostics: 'Mobile Diagnostics',
-  nostart:     'No Start / No Crank Repairs',
-  battery:     'Battery Replacement',
-  engine:      'Engine Problems',
-  brakes:      'Brake Issues',
-  cooling:     'Cooling System Repairs',
-  transmission:'Transmission Diagnostics',
-  suspension:  'Suspension & Steering',
-  tires:       'Flat Tire Repair',
-  fuel:        'Fuel System Repairs',
-  oil:         'Oil Change',
-  electrical:  'Starter & Alternator Repairs',
-  other:       'Other',
 };
 
 /**
@@ -296,70 +273,52 @@ const Home = () => {
   const rootRef = useRef(null);
   useScrollReveal(rootRef);
 
-  // Controlled contact-form state. Starts empty; gets populated when the
-  // user picks "Option B" inside the Estimator (or when they type manually).
+  // Controlled contact-form state.
   const [contactForm, setContactForm] = useState(EMPTY_FORM);
 
-  // Brief highlight of the contact panel after auto-prefill, so the user
-  // sees that something happened post-scroll.
+  // Once the user navigates to the contact section via Option B, we keep
+  // is-visible permanently in React's className so no subsequent re-render
+  // (e.g. justPrefilled toggling) can wipe it out via DOM reconciliation.
+  const [contactRevealed, setContactRevealed] = useState(false);
+
+  // Show the prefill banner for 2.5s after auto-fill.
   const [justPrefilled, setJustPrefilled] = useState(false);
 
   const updateContact = (patch) => setContactForm(f => ({ ...f, ...patch }));
 
   /**
    * Called by the Estimator when the user picks Option B.
-   * 1. Prefill every relevant contact-form field from the payload.
-   * 2. Smooth-scroll to #contact.
-   * 3. Pulse a "filled in" highlight for ~2.5s.
+   * Sets React state so is-visible is part of the className prop (never wiped
+   * by reconciliation), then scrolls directly to the form block.
    */
   const handleRequestPreciseQuote = (payload) => {
     setContactForm({
-      name: '', // we still want them to type their name
+      name: '',
       vehicle: payload.vehicle + (payload.mileage ? ` · ${payload.mileage} km` : ''),
-      service: CATEGORY_TO_SERVICE[payload.categoryId] || 'Other',
       details: buildDetailsFromPayload(payload),
     });
+    setContactRevealed(true);
     setJustPrefilled(true);
 
-    // Force-reveal every [data-reveal] element inside the contact section
-    // BEFORE scrolling so they are never invisible when the user lands there.
-    // (Programmatic scroll bypasses IntersectionObserver timing — this is
-    // intentional: the user didn't "scroll in" organically, we teleport them.)
     requestAnimationFrame(() => {
-      const contactSection = document.getElementById('contact');
-      if (contactSection) {
-        contactSection.querySelectorAll('[data-reveal]').forEach(el => {
-          el.classList.add('is-visible');
-        });
-      }
-      // Scroll to the form block specifically (second column on desktop,
-      // stacked below info block on mobile) rather than top of section.
       const formBlock = document.querySelector('.contact-form-block');
-      const target = formBlock || contactSection;
+      const fallback  = document.getElementById('contact');
+      const target    = formBlock || fallback;
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    setTimeout(() => setJustPrefilled(false), 2800);
+    setTimeout(() => setJustPrefilled(false), 2500);
   };
 
   /**
-   * Submit the contact form — opens user's mail client with a pre-filled
-   * message addressed to the workshop. Uses controlled state, so
-   * estimator-prefilled values flow through unchanged.
+   * Submit the contact form via mailto.
    */
   const handleSubmit = (e) => {
     e.preventDefault();
-    const subject = encodeURIComponent(
-      `Auto Repair Quote – ${contactForm.service || 'Service Request'}`
-    );
+    const vehicle = contactForm.vehicle || 'Vehicle not specified';
+    const subject = encodeURIComponent(`Auto Repair Quote – ${vehicle}`);
     const body = encodeURIComponent(
-      [
-        `Name: ${contactForm.name}`,
-        `Vehicle: ${contactForm.vehicle}`,
-        `Service: ${contactForm.service}`,
-        '',
-        contactForm.details,
-      ].join('\n')
+      [`Name: ${contactForm.name}`, `Vehicle: ${vehicle}`, '', contactForm.details].join('\n')
     );
     window.location.href = `mailto:Mobile.Automotive@hotmail.com?subject=${subject}&body=${body}`;
   };
@@ -536,7 +495,11 @@ const Home = () => {
 
       {/* CONTACT */}
       <section className="contact-split" id="contact">
-        <div className="contact-info-block solid-box" data-reveal>
+        {/* is-visible in React className so no re-render ever wipes it out */}
+        <div
+          className={`contact-info-block solid-box${contactRevealed ? ' is-visible' : ''}`}
+          data-reveal
+        >
           <span className="subtitle accent-line">Logistics</span>
           <h2 className="title">Schedule <span className="title-accent">Deployment.</span></h2>
           <p className="contact-lede">
@@ -564,7 +527,10 @@ const Home = () => {
           </div>
         </div>
 
-        <div className={`contact-form-block${justPrefilled ? ' is-prefilled' : ''}`} data-reveal>
+        <div
+          className={`contact-form-block${justPrefilled ? ' is-prefilled' : ''}${contactRevealed ? ' is-visible' : ''}`}
+          data-reveal
+        >
           {justPrefilled && (
             <div className="contact-prefill-banner">
               <CheckCircle2 />
@@ -595,22 +561,6 @@ const Home = () => {
                 value={contactForm.vehicle}
                 onChange={e => updateContact({ vehicle: e.target.value })}
               />
-            </div>
-            <div className="form-group">
-              <label htmlFor="f-service">Requested Service</label>
-              <select
-                id="f-service"
-                name="service"
-                required
-                value={contactForm.service}
-                onChange={e => updateContact({ service: e.target.value })}
-              >
-                <option value="" disabled hidden>Select Issue...</option>
-                {services.map(s => (
-                  <option key={s.id} value={s.title}>{s.title}</option>
-                ))}
-                <option value="Other">Other / Unsure</option>
-              </select>
             </div>
             <div className="form-group">
               <label htmlFor="f-details">Quote Details</label>

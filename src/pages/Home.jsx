@@ -320,11 +320,25 @@ const Home = () => {
       details: buildDetailsFromPayload(payload),
     });
     setJustPrefilled(true);
-    // wait one tick so the DOM updates before scrolling
+
+    // Force-reveal every [data-reveal] element inside the contact section
+    // BEFORE scrolling so they are never invisible when the user lands there.
+    // (Programmatic scroll bypasses IntersectionObserver timing — this is
+    // intentional: the user didn't "scroll in" organically, we teleport them.)
     requestAnimationFrame(() => {
-      const el = document.getElementById('contact');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.querySelectorAll('[data-reveal]').forEach(el => {
+          el.classList.add('is-visible');
+        });
+      }
+      // Scroll to the form block specifically (second column on desktop,
+      // stacked below info block on mobile) rather than top of section.
+      const formBlock = document.querySelector('.contact-form-block');
+      const target = formBlock || contactSection;
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+
     setTimeout(() => setJustPrefilled(false), 2800);
   };
 

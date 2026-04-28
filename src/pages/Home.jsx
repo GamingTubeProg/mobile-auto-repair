@@ -8,6 +8,7 @@ import {
   Award, Clock, ShieldCheck, Star,
 } from 'lucide-react';
 import Estimator from '../components/Estimator';
+import BrandMarquee from '../components/BrandMarquee';
 import FEATURES from '../config/features';
 
 const services = [
@@ -406,6 +407,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* BRAND MARQUEE */}
+      <BrandMarquee />
 
       {/* SERVICE CATALOGUE */}
       <section className="showroom section" id="services">

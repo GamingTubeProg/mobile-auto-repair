@@ -3,7 +3,7 @@
    ══════════════════════════════════════════════════════════ */
 
 .brand-marquee {
-  padding: 3rem 0 2.8rem;
+  padding: 1.4rem 0 1.2rem;
   border-top:    1px solid rgba(255 255 255 / 0.07);
   border-bottom: 1px solid rgba(255 255 255 / 0.07);
   background:    rgba(255 255 255 / 0.02);
@@ -18,7 +18,7 @@
   text-transform: uppercase;
   color: rgba(255 255 255 / 0.3);
   font-weight: 600;
-  margin: 0 0 2.2rem;
+  margin: 0 0 1rem;
 }
 
 /* ── scrolling viewport ── */
@@ -64,22 +64,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.5rem 2.8rem;
+  gap: 0.5rem;
+  padding: 0.25rem 1.4rem;
   flex-shrink: 0;
   pointer-events: none; /* drag goes to viewport, not items */
 }
 
 /* ── logo card (white pill behind each logo) ── */
 .brand-marquee__logo-wrap {
-  width: 100px;
-  height: 52px;
+  width: 130px;
+  height: 64px;
   background: rgba(255 255 255 / 0.9);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 8px 12px;
   box-sizing: border-box;
   transition: background 0.2s ease;
   flex-shrink: 0;
@@ -91,8 +91,8 @@
 
 /* ── the actual logo image ── */
 .brand-marquee__img {
-  max-width: 80px;
-  max-height: 40px;
+  max-width: 106px;
+  max-height: 50px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -130,17 +130,17 @@
 /* ── mobile ── */
 @media (max-width: 640px) {
   .brand-marquee__item {
-    padding: 0.5rem 1.6rem;
+    padding: 0.25rem 1rem;
   }
 
   .brand-marquee__logo-wrap {
-    width: 80px;
-    height: 44px;
-    padding: 5px 8px;
+    width: 100px;
+    height: 52px;
+    padding: 6px 9px;
   }
 
   .brand-marquee__img {
-    max-width: 64px;
-    max-height: 34px;
+    max-width: 82px;
+    max-height: 40px;
   }
 }

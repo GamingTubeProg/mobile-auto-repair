@@ -10,90 +10,37 @@ import './BrandMarquee.css';
 const PX_PER_SECOND = 45; // idle scroll speed — feel free to tune
 
 /* ─────────────────────────────────────────────────────────────
-   Official brand logos via Wikimedia Commons CDN.
-   All transparent-background PNGs, served by Fastly.
+   Brand logos — PNG images used by londonlube.com
 ───────────────────────────────────────────────────────────────*/
+const LL = (file) =>
+  `https://www.londonlube.com/wp-content/uploads/${file}`;
+
 const BRANDS = [
-  {
-    name: 'Toyota',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Toyota_carlogo.svg/200px-Toyota_carlogo.svg.png',
-  },
-  {
-    name: 'Honda',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Honda_Logo.svg/200px-Honda_Logo.svg.png',
-  },
-  {
-    name: 'Ford',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Ford_Motor_Company_Logo.svg/200px-Ford_Motor_Company_Logo.svg.png',
-  },
-  {
-    name: 'Hyundai',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Hyundai_Motor_Company_logo.svg/200px-Hyundai_Motor_Company_logo.svg.png',
-  },
-  {
-    name: 'Kia',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Kia-logo.svg/200px-Kia-logo.svg.png',
-  },
-  {
-    name: 'Chevrolet',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Chevrolet_logo.svg/200px-Chevrolet_logo.svg.png',
-  },
-  {
-    name: 'GMC',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/GMC_logo.svg/200px-GMC_logo.svg.png',
-  },
-  {
-    name: 'RAM',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Ram_logo.svg/200px-Ram_logo.svg.png',
-  },
-  {
-    name: 'Dodge',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Dodge_Logo.svg/200px-Dodge_Logo.svg.png',
-  },
-  {
-    name: 'Jeep',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Jeep_logo.svg/200px-Jeep_logo.svg.png',
-  },
-  {
-    name: 'Nissan',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nissan_2020_logo.svg/200px-Nissan_2020_logo.svg.png',
-  },
-  {
-    name: 'Mazda',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Mazda_logo_with_text.svg/200px-Mazda_logo_with_text.svg.png',
-  },
-  {
-    name: 'Subaru',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Subaru_logo.svg/200px-Subaru_logo.svg.png',
-  },
-  {
-    name: 'Volkswagen',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/200px-Volkswagen_logo_2019.svg.png',
-  },
-  {
-    name: 'BMW',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/200px-BMW.svg.png',
-  },
-  {
-    name: 'Mercedes',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/200px-Mercedes-Logo.svg.png',
-  },
-  {
-    name: 'Audi',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Audi-Logo_2016.svg/200px-Audi-Logo_2016.svg.png',
-  },
-  {
-    name: 'Mitsubishi',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Mitsubishi_logo.svg/200px-Mitsubishi_logo.svg.png',
-  },
-  {
-    name: 'Acura',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Acura_-_logo.svg/200px-Acura_-_logo.svg.png',
-  },
-  {
-    name: 'Lexus',
-    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Lexus_-_Logo.svg/200px-Lexus_-_Logo.svg.png',
-  },
+  { name: 'Toyota',      src: LL('2016/05/Toyota-logo-1989-2560x1440.png') },
+  { name: 'Honda',       src: LL('2017/04/Honda.png') },
+  { name: 'Ford',        src: LL('2017/04/Ford.png') },
+  { name: 'Chevrolet',   src: LL('2017/04/Chevrolet.png') },
+  { name: 'Dodge',       src: LL('2017/04/Dodge.png') },
+  { name: 'RAM',         src: LL('2017/04/RAM.png') },
+  { name: 'Jeep',        src: LL('2017/04/Jeep.png') },
+  { name: 'Chrysler',    src: LL('2017/04/Chrysler.png') },
+  { name: 'Nissan',      src: LL('2017/04/Nissan.png') },
+  { name: 'Hyundai',     src: LL('2017/04/Hyundai.png') },
+  { name: 'Mazda',       src: LL('2017/04/Mazda.png') },
+  { name: 'Subaru',      src: LL('2016/05/Subaru-logo-2003-2560x1440.png') },
+  { name: 'Volkswagen',  src: LL('2016/05/Volkswagen-logo-2015-1920x1080.png') },
+  { name: 'BMW',         src: LL('2017/04/BMW.png') },
+  { name: 'Mercedes',    src: LL('2017/04/Mercedes-Benz.png') },
+  { name: 'Audi',        src: LL('2017/04/Audi.png') },
+  { name: 'Acura',       src: LL('2017/04/Acura.png') },
+  { name: 'Lexus',       src: LL('2017/04/Lexus.png') },
+  { name: 'Infiniti',    src: LL('2017/04/Infiniti.png') },
+  { name: 'Cadillac',    src: LL('2017/04/Cadillac.png') },
+  { name: 'Buick',       src: LL('2017/04/Buick.png') },
+  { name: 'Jaguar',      src: LL('2017/04/Jaguar.png') },
+  { name: 'Land Rover',  src: LL('2017/04/Land-Rover.png') },
+  { name: 'Mini',        src: LL('2017/04/Mini.png') },
+  { name: 'Fiat',        src: LL('2017/04/Fiat.png') },
 ];
 
 /* ─────────────────────────────────────────────────────────────

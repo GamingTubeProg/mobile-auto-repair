@@ -93,8 +93,7 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('[send-email] Resend API error:', response.status, errText);
-      // Temporary: return full Resend error for debugging
-      return res.status(500).json({ error: 'Email delivery failed.', debug: errText, status: response.status });
+      return res.status(500).json({ error: 'Email delivery failed.' });
     }
 
     console.log('[send-email] Email sent to Mobile.Automotive@hotmail.com');

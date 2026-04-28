@@ -72,14 +72,14 @@
 
 /* ── logo card (white pill behind each logo) ── */
 .brand-marquee__logo-wrap {
-  width: 130px;
-  height: 64px;
+  width: 155px;
+  height: 76px;
   background: rgba(255 255 255 / 0.9);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
+  padding: 10px 14px;
   box-sizing: border-box;
   transition: background 0.2s ease;
   flex-shrink: 0;
@@ -91,8 +91,8 @@
 
 /* ── the actual logo image ── */
 .brand-marquee__img {
-  max-width: 106px;
-  max-height: 50px;
+  max-width: 128px;
+  max-height: 58px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -112,35 +112,25 @@
   max-width: 80px;
 }
 
-/* ── brand name label ── */
+/* ── brand name label — hidden, kept for accessibility/alt text ── */
 .brand-marquee__name {
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  white-space: nowrap;
-  color: rgba(255 255 255 / 0.45);
-  transition: color 0.2s ease;
-}
-
-.brand-marquee__item:hover .brand-marquee__name {
-  color: rgba(255 255 255 / 0.85);
+  display: none;
 }
 
 /* ── mobile ── */
 @media (max-width: 640px) {
   .brand-marquee__item {
-    padding: 0.25rem 1rem;
+    padding: 0.25rem 0.9rem;
   }
 
   .brand-marquee__logo-wrap {
-    width: 100px;
-    height: 52px;
-    padding: 6px 9px;
+    width: 118px;
+    height: 60px;
+    padding: 7px 10px;
   }
 
   .brand-marquee__img {
-    max-width: 82px;
-    max-height: 40px;
+    max-width: 98px;
+    max-height: 46px;
   }
 }

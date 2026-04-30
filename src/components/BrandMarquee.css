@@ -65,39 +65,36 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 1.4rem;
+  padding: 0.25rem 2rem;
   flex-shrink: 0;
   pointer-events: none; /* drag goes to viewport, not items */
 }
 
-/* ── logo card (white pill behind each logo) ── */
+/* ── logo wrap — no background, transparent on dark site ── */
 .brand-marquee__logo-wrap {
-  width: 155px;
-  height: 76px;
-  background: rgba(255 255 255 / 0.9);
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
-  box-sizing: border-box;
-  transition: background 0.2s ease;
   flex-shrink: 0;
-}
-
-.brand-marquee__item:hover .brand-marquee__logo-wrap {
-  background: #ffffff;
 }
 
 /* ── the actual logo image ── */
 .brand-marquee__img {
-  max-width: 128px;
-  max-height: 58px;
+  max-width: 150px;
+  max-height: 70px;
   width: auto;
   height: auto;
   object-fit: contain;
   display: block;
   -webkit-user-drag: none;
+  /* Make dark/black logos visible on dark background */
+  filter: brightness(0) invert(1);
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.brand-marquee__item:hover .brand-marquee__img {
+  opacity: 1;
 }
 
 /* ── fallback text (shown if image fails to load) ── */
@@ -106,10 +103,10 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #333;
+  color: rgba(255 255 255 / 0.5);
   text-align: center;
   line-height: 1.2;
-  max-width: 80px;
+  max-width: 100px;
 }
 
 /* ── brand name label — hidden, kept for accessibility/alt text ── */
@@ -120,17 +117,11 @@
 /* ── mobile ── */
 @media (max-width: 640px) {
   .brand-marquee__item {
-    padding: 0.25rem 0.9rem;
-  }
-
-  .brand-marquee__logo-wrap {
-    width: 118px;
-    height: 60px;
-    padding: 7px 10px;
+    padding: 0.25rem 1.2rem;
   }
 
   .brand-marquee__img {
-    max-width: 98px;
-    max-height: 46px;
+    max-width: 110px;
+    max-height: 52px;
   }
 }

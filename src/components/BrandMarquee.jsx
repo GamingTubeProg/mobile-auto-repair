@@ -7,41 +7,40 @@
 import { useRef, useEffect } from 'react';
 import './BrandMarquee.css';
 
-const PX_PER_SECOND = 45; // idle scroll speed — feel free to tune
+const PX_PER_SECOND = 45;
 
 /* ─────────────────────────────────────────────────────────────
-   Brand logos — locally hosted transparent PNGs (public/Logos/)
+   Brand logos — londonlube.com colored PNGs, shown on white cards
 ───────────────────────────────────────────────────────────────*/
+const LL = (file) =>
+  `https://www.londonlube.com/wp-content/uploads/${file}`;
+
 const BRANDS = [
-  { name: 'Toyota',      src: '/Logos/Toyota.png' },
-  { name: 'Honda',       src: '/Logos/Honda.png' },
-  { name: 'Ford',        src: '/Logos/Ford.png' },
-  { name: 'Chevrolet',   src: '/Logos/Chevrolet.png' },
-  { name: 'Dodge',       src: '/Logos/Dodge.png' },
-  { name: 'RAM',         src: '/Logos/RAM.png' },
-  { name: 'Jeep',        src: '/Logos/Jeep.png' },
-  { name: 'Chrysler',    src: '/Logos/Chrysler.png' },
-  { name: 'Nissan',      src: '/Logos/Nissan.png' },
-  { name: 'Hyundai',     src: '/Logos/Hyundai.png' },
-  { name: 'Mazda',       src: '/Logos/Mazda.png' },
-  { name: 'Subaru',      src: '/Logos/Subaru.png' },
-  { name: 'Volkswagen',  src: '/Logos/Volkswagen.png' },
-  { name: 'BMW',         src: '/Logos/BMW.png' },
-  { name: 'Mercedes',    src: '/Logos/Mercedes.png' },
-  { name: 'Audi',        src: '/Logos/Audi.png' },
-  { name: 'Acura',       src: '/Logos/Acura.png' },
-  { name: 'Lexus',       src: '/Logos/Lexus.png' },
-  { name: 'Infiniti',    src: '/Logos/Infiniti.png' },
-  { name: 'Cadillac',    src: '/Logos/Cadillac.png' },
-  { name: 'Buick',       src: '/Logos/Buick.png' },
-  { name: 'Jaguar',      src: '/Logos/Jaguar.png' },
-  { name: 'Land Rover',  src: '/Logos/LandRover.png' },
-  { name: 'Mini',        src: '/Logos/Mini.png' },
-  { name: 'Fiat',        src: '/Logos/Fiat.png' },
-  { name: 'Kia',         src: '/Logos/Kia.png' },
-  { name: 'Mitsubishi',  src: '/Logos/Mitsubishi.png' },
-  { name: 'GMC',         src: '/Logos/GMC.png' },
-  { name: 'Genesis',     src: '/Logos/Genesis.png' },
+  { name: 'Toyota',     src: LL('2016/05/Toyota-logo-1989-2560x1440.png') },
+  { name: 'Honda',      src: LL('2017/04/Honda.png') },
+  { name: 'Ford',       src: LL('2017/04/Ford.png') },
+  { name: 'Chevrolet',  src: LL('2017/04/Chevrolet.png') },
+  { name: 'Dodge',      src: LL('2017/04/Dodge.png') },
+  { name: 'RAM',        src: LL('2017/04/RAM.png') },
+  { name: 'Jeep',       src: LL('2017/04/Jeep.png') },
+  { name: 'Chrysler',   src: LL('2017/04/Chrysler.png') },
+  { name: 'Nissan',     src: LL('2017/04/Nissan.png') },
+  { name: 'Hyundai',    src: LL('2017/04/Hyundai.png') },
+  { name: 'Mazda',      src: LL('2017/04/Mazda.png') },
+  { name: 'Subaru',     src: LL('2016/05/Subaru-logo-2003-2560x1440.png') },
+  { name: 'Volkswagen', src: LL('2016/05/Volkswagen-logo-2015-1920x1080.png') },
+  { name: 'BMW',        src: LL('2017/04/BMW.png') },
+  { name: 'Mercedes',   src: LL('2017/04/Mercedes-Benz.png') },
+  { name: 'Audi',       src: LL('2017/04/Audi.png') },
+  { name: 'Acura',      src: LL('2017/04/Acura.png') },
+  { name: 'Lexus',      src: LL('2017/04/Lexus.png') },
+  { name: 'Infiniti',   src: LL('2017/04/Infiniti.png') },
+  { name: 'Cadillac',   src: LL('2017/04/Cadillac.png') },
+  { name: 'Buick',      src: LL('2017/04/Buick.png') },
+  { name: 'Jaguar',     src: LL('2017/04/Jaguar.png') },
+  { name: 'Land Rover', src: LL('2017/04/Land-Rover.png') },
+  { name: 'Mini',       src: LL('2017/04/Mini.png') },
+  { name: 'Fiat',       src: LL('2017/04/Fiat.png') },
 ];
 
 /* ─────────────────────────────────────────────────────────────
@@ -51,7 +50,7 @@ export default function BrandMarquee() {
   const trackRef  = useRef(null);
   const viewRef   = useRef(null);
   const stateRef  = useRef({
-    x:               0,      // current scroll position in px
+    x:               0,
     dragging:        false,
     dragStartClient: 0,
     dragStartX:      0,
@@ -102,7 +101,6 @@ export default function BrandMarquee() {
   function moveDrag(clientX) {
     const s = stateRef.current;
     if (!s.dragging) return;
-    // drag left (clientX decreases) → delta positive → x increases → content moves left ✓
     const delta = s.dragStartClient - clientX;
     const hw    = trackRef.current ? trackRef.current.scrollWidth / 2 : 4000;
     s.x = ((s.dragStartX + delta) % hw + hw) % hw;
@@ -112,7 +110,7 @@ export default function BrandMarquee() {
     const s = stateRef.current;
     if (!s.dragging) return;
     s.dragging = false;
-    s.lastTs   = null; // reset timestamp so there's no position jump on resume
+    s.lastTs   = null;
   }
 
   const doubled = [...BRANDS, ...BRANDS];
@@ -147,17 +145,14 @@ export default function BrandMarquee() {
                   loading="lazy"
                   draggable="false"
                   onError={e => {
-                    // fallback: show brand name as text if image fails
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextSibling.style.display = 'flex';
                   }}
                 />
-                {/* hidden fallback text (shown only if img fails) */}
                 <span className="brand-marquee__fallback" style={{ display: 'none' }}>
                   {b.name}
                 </span>
               </div>
-              <span className="brand-marquee__name">{b.name}</span>
             </div>
           ))}
         </div>

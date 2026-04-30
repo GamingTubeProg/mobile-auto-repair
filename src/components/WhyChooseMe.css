@@ -39,7 +39,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  /* top padding always clears the fixed navbar (~65 px) */
+  padding: 72px 1.5rem 1.5rem;
   animation: wcm-fade-in 0.18s ease both;
 }
 

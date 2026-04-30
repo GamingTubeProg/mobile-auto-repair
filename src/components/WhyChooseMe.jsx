@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './WhyChooseMe.css';
 
 const SECTIONS = [
@@ -41,8 +41,18 @@ const SECTIONS = [
 
 export default function WhyChooseMe() {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef(null);
 
   const close = useCallback(() => setOpen(false), []);
+
+  function handleOpen() {
+    // Scroll the button to the bottom of the viewport first so the
+    // modal always has full space above it, then open after the scroll settles.
+    if (buttonRef.current) {
+      buttonRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+    setTimeout(() => setOpen(true), 420);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +68,7 @@ export default function WhyChooseMe() {
 
   return (
     <>
-      <button className="wcm-trigger" onClick={() => setOpen(true)}>
+      <button ref={buttonRef} className="wcm-trigger" onClick={handleOpen}>
         Why Choose Me
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

@@ -55,6 +55,7 @@ export default function BrandMarquee() {
     dragStartClient: 0,
     dragStartX:      0,
     lastTs:          null,
+    pauseUntil:      0,   // epoch ms — auto-scroll resumes after this
   });
 
   /* ── RAF loop ── */
@@ -72,7 +73,7 @@ export default function BrandMarquee() {
     function tick(ts) {
       const s = stateRef.current;
 
-      if (!s.dragging) {
+      if (!s.dragging && Date.now() >= s.pauseUntil) {
         const dt = s.lastTs != null ? (ts - s.lastTs) / 1000 : 0;
         s.x = wrap(s.x + PX_PER_SECOND * dt, getHalfWidth());
       }
@@ -109,8 +110,9 @@ export default function BrandMarquee() {
   function endDrag() {
     const s = stateRef.current;
     if (!s.dragging) return;
-    s.dragging = false;
-    s.lastTs   = null;
+    s.dragging   = false;
+    s.lastTs     = null;
+    s.pauseUntil = Date.now() + 3000; // pause auto-scroll for 3 s after drag
   }
 
   const doubled = [...BRANDS, ...BRANDS];

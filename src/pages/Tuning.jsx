@@ -7,6 +7,23 @@ import './Tuning.css';
 /* ── helpers ── */
 function uniq(arr) { return [...new Set(arr)].sort(); }
 
+/* ── Mode pill ── */
+const MODE_META = {
+  'OBD':       { label: 'OBD',        color: '#27ae60', desc: 'Via OBD-II port — ECU stays in vehicle' },
+  'Bench':     { label: 'Bench',      color: '#e65c00', desc: 'ECU removed, direct processor access' },
+  'OBD+Bench': { label: 'OBD + Bench', color: '#9b59b6', desc: 'Some operations OBD, advanced via bench' },
+};
+
+function ModePill({ mode }) {
+  const m = MODE_META[mode] || MODE_META['OBD'];
+  return (
+    <span className="mode-pill" style={{ '--mode-color': m.color }}>
+      {m.label}
+    </span>
+  );
+}
+
+/* ── Performance bars ── */
 function BarCompare({ label, stockVal, tunedVal, stage2Val, maxVal }) {
   const stockPct  = Math.round((stockVal  / maxVal) * 100);
   const tunedPct  = Math.round((tunedVal  / maxVal) * 100);
@@ -43,6 +60,7 @@ function BarCompare({ label, stockVal, tunedVal, stage2Val, maxVal }) {
   );
 }
 
+/* ── Service badge ── */
 function ServiceBadge({ id }) {
   const s = SERVICE_INFO[id];
   if (!s) return null;
@@ -57,17 +75,11 @@ function ServiceBadge({ id }) {
   );
 }
 
+/* ── Result card ── */
 function TuningResult({ vehicle }) {
-  const maxHp = Math.max(
-    vehicle.stock.hp,
-    vehicle.stage1.hp,
-    vehicle.stage2?.hp ?? 0,
-  ) * 1.15;
-  const maxNm = Math.max(
-    vehicle.stock.nm,
-    vehicle.stage1.nm,
-    vehicle.stage2?.nm ?? 0,
-  ) * 1.15;
+  const maxHp = Math.max(vehicle.stock.hp, vehicle.stage1.hp, vehicle.stage2?.hp ?? 0) * 1.15;
+  const maxNm = Math.max(vehicle.stock.nm, vehicle.stage1.nm, vehicle.stage2?.nm ?? 0) * 1.15;
+  const modeInfo = MODE_META[vehicle.mode] || MODE_META['OBD'];
 
   return (
     <div className="tuning-result">
@@ -79,15 +91,21 @@ function TuningResult({ vehicle }) {
         </div>
         <div className="result-badges">
           <span className="meta-badge">ECU: {vehicle.ecu}</span>
-          <span className="meta-badge">Mode: {vehicle.mode}</span>
+          <ModePill mode={vehicle.mode} />
           <span className={`meta-badge fuel-${vehicle.fuel}`}>{vehicle.fuel.toUpperCase()}</span>
         </div>
       </div>
 
+      {/* Mode explanation strip */}
+      <div className="mode-strip" style={{ '--mode-color': modeInfo.color }}>
+        <span className="mode-strip-label">Connection mode:</span>
+        <strong>{vehicle.mode}</strong>
+        <span className="mode-strip-desc">— {modeInfo.desc}</span>
+      </div>
+
       <div className="result-body">
-        {/* Performance bars */}
         <div className="perf-panel">
-          <h3 className="panel-title">Performance</h3>
+          <h3 className="panel-title">Performance Gains</h3>
           <BarCompare
             label="PS"
             stockVal={vehicle.stock.hp}
@@ -102,7 +120,6 @@ function TuningResult({ vehicle }) {
             stage2Val={vehicle.stage2?.nm}
             maxVal={maxNm}
           />
-
           <div className="perf-numbers">
             <div className="perf-col">
               <span className="perf-num">{vehicle.stock.hp} PS</span>
@@ -125,13 +142,10 @@ function TuningResult({ vehicle }) {
           </div>
         </div>
 
-        {/* Available services */}
         <div className="services-panel">
           <h3 className="panel-title">Available Services</h3>
           <div className="svc-list">
-            {vehicle.services.map(id => (
-              <ServiceBadge key={id} id={id} />
-            ))}
+            {vehicle.services.map(id => <ServiceBadge key={id} id={id} />)}
           </div>
         </div>
       </div>
@@ -144,7 +158,75 @@ function TuningResult({ vehicle }) {
   );
 }
 
-/* ── All services overview ── */
+/* ── Bench Mode section ── */
+function BenchModeSection() {
+  const processors = [
+    { family: 'Infineon Tricore', variants: 'TC1766 · TC1793 · TC1797 · TC27x · TC29x · TC39x', note: 'Bosch EDC17, MED17, MD1, MG1 — majority of modern European ECUs' },
+    { family: 'ST SH72xx / SH7xxx', variants: 'SH7058 · SH7055 · SH7059 · SH72543', note: 'Denso (Toyota, Subaru, Mazda) — requires bench interface' },
+    { family: 'Freescale MPC5xxx', variants: 'MPC555 · MPC561 · MPC5634 · MPC5777', note: 'Delphi, Siemens SID, some Bosch — older platforms' },
+    { family: 'Renesas / NEC 76F', variants: 'V850 · 76F0xx', note: 'Japanese OEM ECUs — Honda, Nissan, Mitsubishi' },
+    { family: 'ST SPC5xxx', variants: 'SPC560 · SPC570 · SPC574', note: 'Latest Marelli, Continental — security chip bypass on bench' },
+    { family: 'Motorola / NXP', variants: 'MPC5674 · S32K · S32R', note: 'High-performance platforms — GM, Ford, newer platforms' },
+  ];
+
+  return (
+    <section className="bench-section">
+      <div className="container">
+        <span className="subtitle">Advanced Access</span>
+        <h2 className="title">OBD vs. Bench Mode</h2>
+        <p className="bench-intro">
+          While most modern vehicles can be remapped via the OBD-II port, many platforms —
+          especially those with Tricore processors or hardware security — require the ECU to be
+          removed and connected directly on the bench. This enables read/write access to the raw
+          processor flash memory, bypassing software-level restrictions and unlocking vehicles that
+          are otherwise inaccessible via OBD alone.
+        </p>
+
+        <div className="mode-compare">
+          <div className="mode-box obd-box">
+            <div className="mode-box-header">
+              <span className="mode-box-tag" style={{ background: '#27ae60' }}>OBD</span>
+              <h3>OBD-II Remap</h3>
+            </div>
+            <ul>
+              <li>ECU stays in the vehicle</li>
+              <li>Connection via standard OBD-II port</li>
+              <li>Faster turnaround — often 1–2 hours</li>
+              <li>No disassembly required</li>
+              <li>Suitable for most current-gen platforms</li>
+            </ul>
+          </div>
+          <div className="mode-box bench-box">
+            <div className="mode-box-header">
+              <span className="mode-box-tag" style={{ background: '#e65c00' }}>Bench</span>
+              <h3>Bench Mode</h3>
+            </div>
+            <ul>
+              <li>ECU removed and connected via JTAG / BDM / Boot mode</li>
+              <li>Direct processor flash read/write</li>
+              <li>Bypasses OBD security restrictions</li>
+              <li>Unlocks vehicles not accessible via OBD</li>
+              <li>Required for immobilizer adaptations on many platforms</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 className="processor-title">Supported Processor Families</h3>
+        <div className="processor-grid">
+          {processors.map(p => (
+            <div key={p.family} className="processor-card">
+              <strong className="processor-family">{p.family}</strong>
+              <span className="processor-variants">{p.variants}</span>
+              <p className="processor-note">{p.note}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Services overview ── */
 function ServicesOverview() {
   const featured = ['stage1', 'stage2', 'egr', 'dpf', 'adblue', 'immo', 'dtc', 'swirl'];
   return (
@@ -176,27 +258,19 @@ export default function Tuning() {
   const [model,  setModel]  = useState('');
   const [engine, setEngine] = useState('');
 
-  const makes  = useMemo(() => uniq(VEHICLES.map(v => v.make)), []);
-  const models = useMemo(() =>
+  const makes   = useMemo(() => uniq(VEHICLES.map(v => v.make)), []);
+  const models  = useMemo(() =>
     make ? uniq(VEHICLES.filter(v => v.make === make).map(v => v.model)) : [],
   [make]);
   const engines = useMemo(() =>
     model ? VEHICLES.filter(v => v.make === make && v.model === model) : [],
   [make, model]);
-
-  const result = useMemo(() =>
+  const result  = useMemo(() =>
     engine ? VEHICLES.find(v => v.id === engine) : null,
   [engine]);
 
-  function handleMake(val) {
-    setMake(val);
-    setModel('');
-    setEngine('');
-  }
-  function handleModel(val) {
-    setModel(val);
-    setEngine('');
-  }
+  function handleMake(val)  { setMake(val);  setModel(''); setEngine(''); }
+  function handleModel(val) { setModel(val); setEngine(''); }
 
   return (
     <div className="app">
@@ -208,22 +282,47 @@ export default function Tuning() {
           <div className="hero-grid" />
         </div>
         <div className="container tuning-hero-content">
+
+          {/* German Engineers cooperation badge */}
+          <div className="de-badge">
+            <span className="de-flag">🇩🇪</span>
+            <span className="de-text">In Cooperation with <strong>German Engineers</strong></span>
+          </div>
+
           <span className="subtitle">Mobile Auto Repair — London, ON</span>
           <h1 className="title tuning-hero-title">
             Performance<br />
             <span className="title-accent">Tuning &amp; Optimization</span>
           </h1>
           <p className="tuning-hero-text">
-            Professional ECU remapping and engine optimization for over 50 vehicle platforms.
-            Unlock hidden power, improve throttle response, and reduce running costs.
+            Professional ECU remapping and engine optimization for 70+ vehicle platforms —
+            via OBD-II and direct bench mode. Developed and validated by certified German
+            engineers with decades of motorsport and automotive expertise.
           </p>
           <div className="hero-stats">
-            <div className="hero-stat"><span className="stat-num">50+</span><span>Platforms</span></div>
-            <div className="hero-stat"><span className="stat-num">OBD</span><span>No teardown</span></div>
+            <div className="hero-stat"><span className="stat-num">70+</span><span>Platforms</span></div>
+            <div className="hero-stat"><span className="stat-num">OBD</span><span>+ Bench mode</span></div>
+            <div className="hero-stat"><span className="stat-num">DE</span><span>Engineering</span></div>
             <div className="hero-stat"><span className="stat-num">100%</span><span>Mobile service</span></div>
           </div>
         </div>
       </section>
+
+      {/* German Engineers partnership strip */}
+      <div className="de-strip">
+        <div className="container de-strip-inner">
+          <div className="de-strip-flag">🇩🇪</div>
+          <div className="de-strip-content">
+            <strong>In Cooperation with German Engineers</strong>
+            <p>
+              All calibrations are developed and reviewed by certified automotive engineers based in Germany —
+              combining decades of motorsport experience with OEM-level precision.
+              Every map is custom-written for your specific vehicle, not a generic off-the-shelf file.
+            </p>
+          </div>
+          <a href="/#contact" className="btn btn-secondary de-strip-btn">Learn More</a>
+        </div>
+      </div>
 
       {/* Vehicle Lookup */}
       <section className="tuning-lookup">
@@ -240,7 +339,6 @@ export default function Tuning() {
                   {makes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-
               <div className={`select-wrap${!make ? ' disabled' : ''}`}>
                 <label>Model</label>
                 <select value={model} onChange={e => handleModel(e.target.value)} disabled={!make}>
@@ -248,7 +346,6 @@ export default function Tuning() {
                   {models.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-
               <div className={`select-wrap${!model ? ' disabled' : ''}`}>
                 <label>Engine</label>
                 <select value={engine} onChange={e => setEngine(e.target.value)} disabled={!model}>
@@ -259,10 +356,9 @@ export default function Tuning() {
                 </select>
               </div>
             </div>
-
             {!result && (
               <p className="lookup-hint">
-                Select your vehicle above to see available tuning options and performance gains.
+                Select your vehicle above to see available tuning options and realistic performance gains.
               </p>
             )}
           </div>
@@ -271,6 +367,7 @@ export default function Tuning() {
         </div>
       </section>
 
+      <BenchModeSection />
       <ServicesOverview />
 
       {/* Disclaimer */}

@@ -463,4 +463,173 @@ export const VEHICLES = [
     stock: { hp: 184, nm: 445 }, stage1: { hp: 230, nm: 530 }, stage2: null,
     services: ['stage1', 'egr', 'dpf', 'dtc'],
   },
+
+  // ── Renault ───────────────────────────────────────────────────
+  {
+    id: 'renault-megane-rs',
+    make: 'Renault', model: 'Megane RS (MK3)', years: '2010–2016',
+    engine: '2.0T F4RT (265 PS)', fuel: 'petrol', ecu: 'Siemens SID310', mode: 'Bench',
+    stock: { hp: 265, nm: 360 }, stage1: { hp: 320, nm: 420 }, stage2: { hp: 365, nm: 460 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'immo'],
+  },
+  {
+    id: 'renault-megane4-rs',
+    make: 'Renault', model: 'Megane RS (MK4)', years: '2017–2023',
+    engine: '1.8T M5PT (300 PS)', fuel: 'petrol', ecu: 'Bosch MED17.7.3', mode: 'OBD+Bench',
+    stock: { hp: 300, nm: 420 }, stage1: { hp: 365, nm: 490 }, stage2: { hp: 415, nm: 540 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
+  {
+    id: 'renault-trafic-20dci',
+    make: 'Renault', model: 'Trafic (X82)', years: '2014–2023',
+    engine: '2.0 dCi M9R (145 PS)', fuel: 'diesel', ecu: 'Bosch EDC17C11', mode: 'OBD',
+    stock: { hp: 145, nm: 340 }, stage1: { hp: 185, nm: 420 }, stage2: null,
+    services: ['stage1', 'egr', 'dpf', 'adblue', 'dtc'],
+  },
+
+  // ── Peugeot / Citroën ─────────────────────────────────────────
+  {
+    id: 'peugeot-308-gti',
+    make: 'Peugeot', model: '308 GTi (T9)', years: '2015–2021',
+    engine: '1.6T THP 270 (272 PS)', fuel: 'petrol', ecu: 'Bosch MED17.4.4', mode: 'OBD+Bench',
+    stock: { hp: 272, nm: 330 }, stage1: { hp: 330, nm: 400 }, stage2: { hp: 375, nm: 440 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
+  {
+    id: 'citroen-c5-aircross-15d',
+    make: 'Citroën', model: 'C5 Aircross (E3)', years: '2018–2024',
+    engine: '1.5 BlueHDi (131 PS)', fuel: 'diesel', ecu: 'Bosch MD1CS003', mode: 'OBD+Bench',
+    stock: { hp: 131, nm: 300 }, stage1: { hp: 175, nm: 370 }, stage2: null,
+    services: ['stage1', 'egr', 'dpf', 'adblue', 'dtc'],
+  },
+  {
+    id: 'peugeot-508-20d',
+    make: 'Peugeot', model: '508 (R8)', years: '2018–2024',
+    engine: '2.0 BlueHDi (180 PS)', fuel: 'diesel', ecu: 'Bosch MD1CS003', mode: 'OBD+Bench',
+    stock: { hp: 180, nm: 400 }, stage1: { hp: 230, nm: 480 }, stage2: null,
+    services: ['stage1', 'egr', 'dpf', 'adblue', 'dtc'],
+  },
+
+  // ── Opel / Vauxhall ───────────────────────────────────────────
+  {
+    id: 'opel-astra-opc',
+    make: 'Opel', model: 'Astra OPC (J)', years: '2012–2015',
+    engine: '2.0T A20NFT (280 PS)', fuel: 'petrol', ecu: 'Bosch ME7.6.2', mode: 'Bench',
+    stock: { hp: 280, nm: 400 }, stage1: { hp: 340, nm: 460 }, stage2: { hp: 390, nm: 510 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'immo'],
+  },
+  {
+    id: 'opel-insignia-biturbo',
+    make: 'Opel', model: 'Insignia BiTurbo (B)', years: '2017–2022',
+    engine: '2.0 CDTI BiTurbo (210 PS)', fuel: 'diesel', ecu: 'Bosch EDC17C18', mode: 'OBD',
+    stock: { hp: 210, nm: 450 }, stage1: { hp: 270, nm: 540 }, stage2: null,
+    services: ['stage1', 'egr', 'dpf', 'adblue', 'dtc'],
+  },
+
+  // ── Alfa Romeo ────────────────────────────────────────────────
+  {
+    id: 'alfa-giulia-qv',
+    make: 'Alfa Romeo', model: 'Giulia QV (952)', years: '2016–2024',
+    engine: '2.9T V6 690T (510 PS)', fuel: 'petrol', ecu: 'Bosch MED17.3.5', mode: 'OBD',
+    stock: { hp: 510, nm: 600 }, stage1: { hp: 580, nm: 680 }, stage2: null,
+    services: ['stage1', 'speed', 'dtc', 'o2'],
+  },
+  {
+    id: 'alfa-stelvio-20t',
+    make: 'Alfa Romeo', model: 'Stelvio 2.0T (949)', years: '2017–2024',
+    engine: '2.0T GME (280 PS)', fuel: 'petrol', ecu: 'Bosch MED17.3.5', mode: 'OBD',
+    stock: { hp: 280, nm: 400 }, stage1: { hp: 345, nm: 470 }, stage2: { hp: 390, nm: 520 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
+
+  // ── Fiat ──────────────────────────────────────────────────────
+  {
+    id: 'fiat-124-spider',
+    make: 'Fiat', model: '124 Spider (348)', years: '2016–2020',
+    engine: '1.4 MultiAir (140 PS)', fuel: 'petrol', ecu: 'Marelli 8GMF', mode: 'OBD+Bench',
+    stock: { hp: 140, nm: 240 }, stage1: { hp: 185, nm: 295 }, stage2: { hp: 215, nm: 330 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'immo'],
+  },
+
+  // ── GM / Chevrolet ────────────────────────────────────────────
+  {
+    id: 'chevrolet-corvette-c7',
+    make: 'Chevrolet', model: 'Corvette C7 (C7)', years: '2014–2019',
+    engine: '6.2 V8 LT1 (460 PS)', fuel: 'petrol', ecu: 'Delco E92', mode: 'OBD',
+    stock: { hp: 460, nm: 630 }, stage1: { hp: 530, nm: 700 }, stage2: { hp: 580, nm: 760 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'o2'],
+  },
+  {
+    id: 'chevrolet-camaro-ss',
+    make: 'Chevrolet', model: 'Camaro SS (Gen6)', years: '2016–2024',
+    engine: '6.2 V8 LT1 (450 PS)', fuel: 'petrol', ecu: 'Delco E92', mode: 'OBD',
+    stock: { hp: 450, nm: 617 }, stage1: { hp: 520, nm: 690 }, stage2: { hp: 570, nm: 750 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'o2'],
+  },
+
+  // ── BMW (Bench-only / advanced) ───────────────────────────────
+  {
+    id: 'bmw-m3-f80',
+    make: 'BMW', model: 'M3 (F80)', years: '2014–2018',
+    engine: '3.0T S55 (431 PS)', fuel: 'petrol', ecu: 'Bosch MSD87', mode: 'OBD+Bench',
+    stock: { hp: 431, nm: 550 }, stage1: { hp: 510, nm: 640 }, stage2: { hp: 570, nm: 700 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'o2'],
+  },
+  {
+    id: 'bmw-m5-f90',
+    make: 'BMW', model: 'M5 (F90)', years: '2018–2024',
+    engine: '4.4T V8 S63 (600 PS)', fuel: 'petrol', ecu: 'Bosch MG1CS201', mode: 'OBD+Bench',
+    stock: { hp: 600, nm: 750 }, stage1: { hp: 700, nm: 870 }, stage2: { hp: 750, nm: 930 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'o2'],
+  },
+
+  // ── Mercedes (Bench-mode platforms) ──────────────────────────
+  {
+    id: 'mb-amg-gt-black',
+    make: 'Mercedes-Benz', model: 'AMG GT Black Series (C190)', years: '2020–2023',
+    engine: '4.0T V8 M178 LS2 (730 PS)', fuel: 'petrol', ecu: 'Bosch MG1CS002', mode: 'Bench',
+    stock: { hp: 730, nm: 800 }, stage1: { hp: 820, nm: 900 }, stage2: null,
+    services: ['stage1', 'speed', 'dtc'],
+  },
+  {
+    id: 'mb-w463-g63',
+    make: 'Mercedes-Benz', model: 'G63 AMG (W463)', years: '2018–2024',
+    engine: '4.0T V8 M177 (585 PS)', fuel: 'petrol', ecu: 'Bosch MG1CS002', mode: 'OBD+Bench',
+    stock: { hp: 585, nm: 850 }, stage1: { hp: 680, nm: 950 }, stage2: { hp: 740, nm: 1020 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
+
+  // ── Subaru ────────────────────────────────────────────────────
+  {
+    id: 'subaru-wrx-sti',
+    make: 'Subaru', model: 'WRX STI (VAB)', years: '2014–2021',
+    engine: '2.5T EJ257 (300 PS)', fuel: 'petrol', ecu: 'Denso SH7058', mode: 'OBD+Bench',
+    stock: { hp: 300, nm: 407 }, stage1: { hp: 365, nm: 470 }, stage2: { hp: 420, nm: 540 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'o2'],
+  },
+  {
+    id: 'subaru-wrx-vb',
+    make: 'Subaru', model: 'WRX (VB)', years: '2022–2024',
+    engine: '2.4T FA24 (271 PS)', fuel: 'petrol', ecu: 'Denso SH72543', mode: 'OBD+Bench',
+    stock: { hp: 271, nm: 350 }, stage1: { hp: 330, nm: 430 }, stage2: { hp: 380, nm: 490 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
+
+  // ── Mitsubishi ────────────────────────────────────────────────
+  {
+    id: 'mitsubishi-evo-x',
+    make: 'Mitsubishi', model: 'Lancer Evo X (CZ4A)', years: '2008–2016',
+    engine: '2.0T 4B11T (300 PS)', fuel: 'petrol', ecu: 'Mitsubishi MH8304F', mode: 'Bench',
+    stock: { hp: 300, nm: 422 }, stage1: { hp: 370, nm: 500 }, stage2: { hp: 430, nm: 570 },
+    services: ['stage1', 'stage2', 'speed', 'dtc', 'immo'],
+  },
+
+  // ── Honda ─────────────────────────────────────────────────────
+  {
+    id: 'honda-civic-type-r',
+    make: 'Honda', model: 'Civic Type R (FK8)', years: '2017–2022',
+    engine: '2.0T K20C1 (320 PS)', fuel: 'petrol', ecu: 'Keihin 37820', mode: 'OBD+Bench',
+    stock: { hp: 320, nm: 400 }, stage1: { hp: 385, nm: 460 }, stage2: { hp: 430, nm: 510 },
+    services: ['stage1', 'stage2', 'speed', 'dtc'],
+  },
 ];

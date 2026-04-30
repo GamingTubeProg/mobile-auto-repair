@@ -3,15 +3,13 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Footer from './components/Footer';
 import Admin from './pages/Admin';
+import Tuning from './pages/Tuning';
 
-// Zero-dependency routing: check the URL path.
-// /admin → admin panel, everything else → main site.
-const isAdmin = window.location.pathname === '/admin';
+const path = window.location.pathname;
 
 function App() {
-  if (isAdmin) {
-    return <Admin />;
-  }
+  if (path === '/admin')  return <Admin />;
+  if (path === '/tuning') return <Tuning />;
 
   return (
     <div className="app">

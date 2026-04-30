@@ -47,7 +47,8 @@
   transition: color var(--transition-fast);
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a.nav-active {
   color: var(--accent-primary);
 }
 

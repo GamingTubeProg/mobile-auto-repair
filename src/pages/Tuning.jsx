@@ -252,6 +252,29 @@ function ServicesOverview() {
   );
 }
 
+/* ── German Engineers expandable badge ── */
+function DeCoopBadge() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="de-badge-wrap">
+      <div className="de-badge">
+        <span className="de-flag">🇩🇪</span>
+        <span className="de-text">In Cooperation with <strong>German Engineers</strong></span>
+        <button className="de-learn-btn" onClick={() => setOpen(o => !o)}>
+          {open ? 'Close' : 'Learn More'}
+        </button>
+      </div>
+      {open && (
+        <div className="de-expand">
+          All calibrations are developed and reviewed by certified automotive engineers based
+          in Germany — combining decades of motorsport experience with OEM-level precision.
+          Every map is custom-written for your specific vehicle, not a generic off-the-shelf file.
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Page ── */
 export default function Tuning() {
   const [make,   setMake]   = useState('');
@@ -283,11 +306,8 @@ export default function Tuning() {
         </div>
         <div className="container tuning-hero-content">
 
-          {/* German Engineers cooperation badge */}
-          <div className="de-badge">
-            <span className="de-flag">🇩🇪</span>
-            <span className="de-text">In Cooperation with <strong>German Engineers</strong></span>
-          </div>
+          {/* German Engineers cooperation badge — expandable */}
+          <DeCoopBadge />
 
           <span className="subtitle">Mobile Auto Repair — London, ON</span>
           <h1 className="title tuning-hero-title">
@@ -307,22 +327,6 @@ export default function Tuning() {
           </div>
         </div>
       </section>
-
-      {/* German Engineers partnership strip */}
-      <div className="de-strip">
-        <div className="container de-strip-inner">
-          <div className="de-strip-flag">🇩🇪</div>
-          <div className="de-strip-content">
-            <strong>In Cooperation with German Engineers</strong>
-            <p>
-              All calibrations are developed and reviewed by certified automotive engineers based in Germany —
-              combining decades of motorsport experience with OEM-level precision.
-              Every map is custom-written for your specific vehicle, not a generic off-the-shelf file.
-            </p>
-          </div>
-          <a href="/#contact" className="btn btn-secondary de-strip-btn">Learn More</a>
-        </div>
-      </div>
 
       {/* Vehicle Lookup */}
       <section className="tuning-lookup">
@@ -367,8 +371,8 @@ export default function Tuning() {
         </div>
       </section>
 
-      <BenchModeSection />
       <ServicesOverview />
+      <BenchModeSection />
 
       {/* Disclaimer */}
       <section className="tuning-disclaimer">

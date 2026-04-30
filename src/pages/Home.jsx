@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Estimator from '../components/Estimator';
 import BrandMarquee from '../components/BrandMarquee';
+import WhyChooseMe from '../components/WhyChooseMe';
 import FEATURES from '../config/features';
 
 const services = [
@@ -522,6 +523,8 @@ const Home = () => {
             <span>Volkswagen</span>
             <span>Porsche</span>
           </div>
+
+          <WhyChooseMe />
         </div>
       </section>
 

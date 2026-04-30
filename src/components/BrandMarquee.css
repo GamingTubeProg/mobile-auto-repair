@@ -70,8 +70,10 @@
   pointer-events: none; /* drag goes to viewport, not items */
 }
 
-/* ── logo wrap — transparent, blends with dark background ── */
+/* ── logo wrap — fixed box, all logos fill it equally ── */
 .brand-marquee__logo-wrap {
+  width: 200px;
+  height: 95px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,14 +82,12 @@
 
 /* ── the actual logo image ── */
 .brand-marquee__img {
-  max-width: 185px;
-  max-height: 88px;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
   -webkit-user-drag: none;
-  opacity: 0.8;
+  opacity: 0.85;
   transition: opacity 0.2s ease;
 }
 
@@ -121,11 +121,5 @@
   .brand-marquee__logo-wrap {
     width: 140px;
     height: 68px;
-    padding: 8px 12px;
-  }
-
-  .brand-marquee__img {
-    max-width: 116px;
-    max-height: 52px;
   }
 }

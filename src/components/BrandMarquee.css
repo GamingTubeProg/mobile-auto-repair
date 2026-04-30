@@ -70,7 +70,7 @@
   pointer-events: none; /* drag goes to viewport, not items */
 }
 
-/* ── logo wrap — no background, transparent on dark site ── */
+/* ── logo wrap — transparent, blends with dark background ── */
 .brand-marquee__logo-wrap {
   display: flex;
   align-items: center;
@@ -87,9 +87,7 @@
   object-fit: contain;
   display: block;
   -webkit-user-drag: none;
-  /* Make dark/black logos visible on dark background */
-  filter: brightness(0) invert(1);
-  opacity: 0.75;
+  opacity: 0.8;
   transition: opacity 0.2s ease;
 }
 
@@ -117,11 +115,17 @@
 /* ── mobile ── */
 @media (max-width: 640px) {
   .brand-marquee__item {
-    padding: 0.25rem 1.2rem;
+    padding: 0.25rem 0.8rem;
+  }
+
+  .brand-marquee__logo-wrap {
+    width: 140px;
+    height: 68px;
+    padding: 8px 12px;
   }
 
   .brand-marquee__img {
-    max-width: 140px;
-    max-height: 66px;
+    max-width: 116px;
+    max-height: 52px;
   }
 }

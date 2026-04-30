@@ -8,30 +8,30 @@ const SECTIONS = [
   },
   {
     heading: 'Core Problem Observed in Workshops',
+    intro: 'From my professional experience, I have frequently seen:',
     items: [
       'Customers being recommended unnecessary repairs or parts',
       'Decisions made without proper diagnostic depth',
       'High repair costs without solving the actual issue',
     ],
-    intro: 'From my professional experience, I have frequently seen:',
   },
   {
     heading: 'Real-World Experience',
-    items: [
-      'Vehicles that have been in workshops for weeks or months without resolution',
-      'Multiple repair attempts without fixing the root cause',
-      'Complex electrical or no-start issues often left unresolved',
-    ],
     intro: 'A large portion of my work involves vehicles that:',
+    items: [
+      'Have been in workshops for weeks or months without resolution',
+      'Underwent multiple repair attempts without fixing the root cause',
+      'Often suffer from complex electrical or no-start issues',
+    ],
   },
   {
     heading: 'My Approach',
+    intro: 'My work is based on a simple principle:',
     items: [
       'Structured and precise diagnostics first',
       'Repairs only when truly necessary',
       'Focus on root cause instead of symptoms',
     ],
-    intro: 'My work is based on a simple principle:',
   },
   {
     heading: 'Pricing & Value',
@@ -44,7 +44,6 @@ export default function WhyChooseMe() {
 
   const close = useCallback(() => setOpen(false), []);
 
-  // Close on Escape key
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (e.key === 'Escape') close(); };
@@ -52,7 +51,6 @@ export default function WhyChooseMe() {
     return () => window.removeEventListener('keydown', handler);
   }, [open, close]);
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -68,14 +66,23 @@ export default function WhyChooseMe() {
       </button>
 
       {open && (
-        <div className="wcm-overlay" onClick={close} role="dialog" aria-modal="true" aria-label="Why Choose Me">
-          <div className="wcm-modal" onClick={e => e.stopPropagation()}>
+        <div
+          className="wcm-overlay"
+          onPointerDown={close}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Why Choose Me"
+        >
+          <div className="wcm-modal" onPointerDown={e => e.stopPropagation()}>
+
+            {/* Drag handle (mobile) */}
+            <div className="wcm-handle" aria-hidden="true" />
 
             <div className="wcm-header">
               <h2 className="wcm-title">Why Choose Me</h2>
               <button className="wcm-close" onClick={close} aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M3 3l14 14M17 3L3 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
@@ -88,13 +95,16 @@ export default function WhyChooseMe() {
                   {s.body  && <p className="wcm-text">{s.body}</p>}
                   {s.items && (
                     <ul className="wcm-list">
-                      {s.items.map((item, j) => (
-                        <li key={j}>{item}</li>
-                      ))}
+                      {s.items.map((item, j) => <li key={j}>{item}</li>)}
                     </ul>
                   )}
                 </div>
               ))}
+            </div>
+
+            {/* Visible close button at bottom — critical for mobile usability */}
+            <div className="wcm-bottom-close">
+              <button className="wcm-bottom-btn" onClick={close}>Close</button>
             </div>
 
           </div>

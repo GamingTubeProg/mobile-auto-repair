@@ -97,12 +97,6 @@ export default function WhyChooseMe() {
               ))}
             </div>
 
-            <div className="wcm-footer">
-              <a href="#contact" className="btn btn-primary" onClick={close}>
-                Book a Diagnostic
-              </a>
-            </div>
-
           </div>
         </div>
       )}

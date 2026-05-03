@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Footer from './components/Footer';
 import Admin from './pages/Admin';
 import Tuning from './pages/Tuning';
+import Booking from './pages/Booking';
 import AdminLogin from './components/AdminLogin';
 import { supabase } from './lib/supabase';
 
@@ -50,6 +51,9 @@ function App() {
     if (!session) return <AdminLogin />;
     return <Admin />;
   }
+
+  // ── /booking route ────────────────────────────────────────
+  if (path === '/booking') return <Booking />;
 
   // ── /tuning route ─────────────────────────────────────────
   if (path === '/tuning') return <Tuning />;

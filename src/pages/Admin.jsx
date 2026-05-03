@@ -39,12 +39,39 @@ function getEffective(stored) {
   );
 }
 
+const STATUS_LABELS = {
+  pending:   { label: 'Ausstehend',  color: 'orange' },
+  confirmed: { label: 'Bestätigt',   color: 'green'  },
+  completed: { label: 'Abgeschlossen', color: 'blue' },
+  cancelled: { label: 'Abgesagt',    color: 'red'    },
+};
+
+const SERVICE_LABELS = {
+  diagnose:  'Diagnose',
+  reparatur: 'Reparatur',
+  tuning:    'ECU-Tuning',
+  wartung:   'Wartung',
+  sonstiges: 'Sonstiges',
+};
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}.${m}.${y}`;
+}
+
 const Admin = () => {
   const [stored,       setStored]       = useState(loadStored);
   const [saved,        setSaved]        = useState(false);
   const [copied,       setCopied]       = useState(false);
   const [deployStatus, setDeployStatus] = useState(null); // null|'checking'|'deploying'|'success'|'no-change'|{error}
   const [serverOnline, setServerOnline] = useState(null); // null=unknown, true, false
+
+  // ── Bookings state ───────────────────────────────────────
+  const [bookings,        setBookings]        = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
+  const [bookingsFilter,  setBookingsFilter]  = useState('upcoming'); // 'upcoming' | 'all'
+  const [statusUpdating,  setStatusUpdating]  = useState(null); // booking id being updated
 
   const effective = getEffective(stored);
 
@@ -54,6 +81,40 @@ const Admin = () => {
       .then(r => r.ok && setServerOnline(true))
       .catch(() => setServerOnline(false));
   }, []);
+
+  // Load bookings from Supabase
+  useEffect(() => {
+    async function loadBookings() {
+      setBookingsLoading(true);
+      let query = supabase
+        .from('bookings')
+        .select('*')
+        .order('booking_date', { ascending: true })
+        .order('time_slot',    { ascending: true });
+
+      if (bookingsFilter === 'upcoming') {
+        const today = new Date().toISOString().slice(0, 10);
+        query = query.gte('booking_date', today);
+      }
+
+      const { data, error } = await query;
+      if (!error) setBookings(data ?? []);
+      setBookingsLoading(false);
+    }
+    loadBookings();
+  }, [bookingsFilter]);
+
+  const updateBookingStatus = async (id, status) => {
+    setStatusUpdating(id);
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status })
+      .eq('id', id);
+    if (!error) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    }
+    setStatusUpdating(null);
+  };
 
   const handleDeploy = async () => {
     setDeployStatus('deploying');
@@ -129,6 +190,119 @@ const Admin = () => {
       </header>
 
       <main className="admin-main">
+        {/* BOOKINGS SECTION */}
+        <section className="admin-section">
+          <div className="admin-bookings-header">
+            <div>
+              <h2 className="admin-section-title">Terminbuchungen</h2>
+              <p className="admin-section-sub" style={{ marginBottom: 0 }}>
+                Eingehende Terminanfragen verwalten und bestätigen.
+              </p>
+            </div>
+            <div className="admin-bookings-filter">
+              <button
+                className={`adm-btn adm-btn-small${bookingsFilter === 'upcoming' ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
+                onClick={() => setBookingsFilter('upcoming')}
+              >
+                Bevorstehend
+              </button>
+              <button
+                className={`adm-btn adm-btn-small${bookingsFilter === 'all' ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
+                onClick={() => setBookingsFilter('all')}
+              >
+                Alle
+              </button>
+            </div>
+          </div>
+
+          {bookingsLoading ? (
+            <div className="admin-bookings-empty">Buchungen werden geladen…</div>
+          ) : bookings.length === 0 ? (
+            <div className="admin-bookings-empty">
+              {bookingsFilter === 'upcoming' ? 'Keine bevorstehenden Termine.' : 'Keine Buchungen vorhanden.'}
+            </div>
+          ) : (
+            <div className="admin-bookings-table-wrap">
+              <table className="admin-bookings-table">
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Uhrzeit</th>
+                    <th>Service</th>
+                    <th>Name</th>
+                    <th>Telefon</th>
+                    <th>Fahrzeug</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map(b => (
+                    <tr key={b.id} className={`admin-booking-row status-${b.status}`}>
+                      <td className="abt-date">{formatDate(b.booking_date)}</td>
+                      <td className="abt-time">{b.time_slot}</td>
+                      <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
+                      <td>{b.name}</td>
+                      <td>
+                        <a href={`tel:${b.phone}`} className="abt-phone">{b.phone}</a>
+                      </td>
+                      <td className="abt-vehicle">{b.vehicle}</td>
+                      <td>
+                        <span className={`abt-badge abt-badge-${STATUS_LABELS[b.status]?.color ?? 'grey'}`}>
+                          {STATUS_LABELS[b.status]?.label ?? b.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="abt-actions">
+                          {b.status === 'pending' && (
+                            <>
+                              <button
+                                className="abt-action-btn confirm"
+                                disabled={statusUpdating === b.id}
+                                onClick={() => updateBookingStatus(b.id, 'confirmed')}
+                              >
+                                Bestätigen
+                              </button>
+                              <button
+                                className="abt-action-btn cancel"
+                                disabled={statusUpdating === b.id}
+                                onClick={() => updateBookingStatus(b.id, 'cancelled')}
+                              >
+                                Absagen
+                              </button>
+                            </>
+                          )}
+                          {b.status === 'confirmed' && (
+                            <>
+                              <button
+                                className="abt-action-btn complete"
+                                disabled={statusUpdating === b.id}
+                                onClick={() => updateBookingStatus(b.id, 'completed')}
+                              >
+                                Abschließen
+                              </button>
+                              <button
+                                className="abt-action-btn cancel"
+                                disabled={statusUpdating === b.id}
+                                onClick={() => updateBookingStatus(b.id, 'cancelled')}
+                              >
+                                Absagen
+                              </button>
+                            </>
+                          )}
+                          {(b.status === 'completed' || b.status === 'cancelled') && (
+                            <span className="abt-no-action">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         {/* STATUS BAR */}
         <div className={`admin-status-bar${hasOverrides ? ' has-overrides' : ''}`}>
           {hasOverrides ? (

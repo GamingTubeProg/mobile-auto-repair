@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Navbar.css';
 import FEATURES from '../config/features';
 
-const Navbar = ({ tuningPage = false }) => {
+const Navbar = ({ tuningPage = false, bookingPage = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -14,8 +14,8 @@ const Navbar = ({ tuningPage = false }) => {
 
   const close = () => setMenuOpen(false);
 
-  // On the tuning page, anchor links need the home-page prefix
-  const pfx = tuningPage ? '/' : '';
+  // On sub-pages, anchor links need the home-page prefix
+  const pfx = (tuningPage || bookingPage) ? '/' : '';
 
   return (
     <nav className={`navbar${scrolled ? ' is-scrolled' : ''}`}>
@@ -27,7 +27,9 @@ const Navbar = ({ tuningPage = false }) => {
         </div>
         <ul className={`nav-links${menuOpen ? ' is-open' : ''}`}>
           <li><a href={pfx + '#services'} onClick={close}>Services</a></li>
-          {FEATURES.ESTIMATOR_ENABLED && <li><a href={pfx + '#estimator'} onClick={close}>Estimate</a></li>}
+          {FEATURES.ESTIMATOR_ENABLED && (
+            <li><a href={pfx + '#estimator'} onClick={close}>Estimate</a></li>
+          )}
           <li>
             <a
               href="/tuning"
@@ -38,7 +40,15 @@ const Navbar = ({ tuningPage = false }) => {
             </a>
           </li>
           <li><a href={pfx + '#about'} onClick={close}>About</a></li>
-          <li><a href={pfx + '#contact'} className="btn btn-primary btn-small" onClick={close}>Book Now</a></li>
+          <li>
+            <a
+              href="/booking"
+              onClick={close}
+              className={`btn btn-primary btn-small${bookingPage ? ' nav-active' : ''}`}
+            >
+              Termin buchen
+            </a>
+          </li>
         </ul>
         <button
           className={`hamburger${menuOpen ? ' is-open' : ''}`}

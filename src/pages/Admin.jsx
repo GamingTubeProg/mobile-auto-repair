@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import './Admin.css';
 
 const STORAGE_KEY = 'mar_features';
@@ -44,20 +45,15 @@ const Admin = () => {
   const [copied,       setCopied]       = useState(false);
   const [deployStatus, setDeployStatus] = useState(null); // null|'checking'|'deploying'|'success'|'no-change'|{error}
   const [serverOnline, setServerOnline] = useState(null); // null=unknown, true, false
-  const [password,     setPassword]     = useState('');
-  const [unlocked,     setUnlocked]     = useState(
-    () => localStorage.getItem('mar_admin_auth') === 'ok'
-  );
 
   const effective = getEffective(stored);
 
   // Check if local admin server is reachable
   React.useEffect(() => {
-    if (!unlocked) return;
     fetch('http://localhost:3001/api/status')
       .then(r => r.ok && setServerOnline(true))
       .catch(() => setServerOnline(false));
-  }, [unlocked]);
+  }, []);
 
   const handleDeploy = async () => {
     setDeployStatus('deploying');
@@ -107,51 +103,12 @@ const Admin = () => {
     });
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === 'mobileauto2024') {
-      localStorage.setItem('mar_admin_auth', 'ok');
-      setUnlocked(true);
-    } else {
-      alert('Incorrect password.');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('mar_admin_auth');
-    setUnlocked(false);
-    setPassword('');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // App.jsx onAuthStateChange fires → AdminLogin renders automatically
   };
 
   const hasOverrides = Object.keys(stored).length > 0;
-
-  // ── Login screen ─────────────────────────────────────────
-  if (!unlocked) {
-    return (
-      <div className="admin-root">
-        <div className="admin-login">
-          <div className="admin-login-card">
-            <h1 className="admin-logo">
-              MOBILE <span>AUTO REPAIR</span>
-            </h1>
-            <p className="admin-login-sub">Admin — Feature Settings</p>
-            <form onSubmit={handleLogin} className="admin-login-form">
-              <input
-                type="password"
-                placeholder="Enter admin password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoFocus
-              />
-              <button type="submit" className="adm-btn adm-btn-primary">
-                Unlock →
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Main panel ───────────────────────────────────────────
   return (

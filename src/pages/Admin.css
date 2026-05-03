@@ -63,9 +63,16 @@
   color: var(--text-main);
   padding: 0.95rem 1.1rem;
   width: 100%;
-  text-align: center;
-  letter-spacing: 4px;
+  text-align: left;
+  letter-spacing: 0;
   transition: border-color 0.2s;
+}
+
+.admin-login-error {
+  font-size: 0.82rem;
+  color: #e05a5a;
+  text-align: center;
+  margin: -0.25rem 0 0.25rem;
 }
 
 .admin-login-form input:focus {

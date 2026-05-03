@@ -747,6 +747,153 @@
   font-size: 0.85rem;
 }
 
+/* ── Availability section ── */
+.adm-avail-week-label {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.adm-legend-item {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid;
+  border-radius: 2px;
+}
+
+.adm-legend-item.free    { color: var(--text-muted); border-color: var(--border-color); }
+.adm-legend-item.blocked { color: #ef4444; border-color: rgba(239,68,68,0.4); }
+.adm-legend-item.booked  { color: #22c55e; border-color: rgba(34,197,94,0.4); }
+
+.adm-avail-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+}
+
+.adm-avail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.adm-avail-col.past { opacity: 0.38; pointer-events: none; }
+
+.adm-avail-col-hdr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.15rem;
+}
+
+.adm-avail-col-day {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.adm-avail-col-date {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* Slot cells */
+.adm-slot {
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 0.4rem 0.3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+  transition: all 0.15s;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+}
+
+.adm-slot-time {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.adm-slot-sub,
+.adm-slot-name {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Free slot */
+.adm-slot.free {
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+.adm-slot.free:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  background: rgba(230,92,0,0.08);
+  color: var(--accent-primary);
+}
+
+/* Blocked slot */
+.adm-slot.blocked {
+  border-color: rgba(239,68,68,0.4);
+  background: rgba(239,68,68,0.07);
+  color: #ef4444;
+  cursor: pointer;
+}
+.adm-slot.blocked:hover:not(:disabled) {
+  border-color: #ef4444;
+  background: rgba(239,68,68,0.14);
+}
+
+/* Booked slot (customer booking — not a button) */
+.adm-slot.booked {
+  cursor: default;
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.06);
+  color: #22c55e;
+}
+.adm-slot.booked.s-pending {
+  border-color: rgba(230,92,0,0.4);
+  background: rgba(230,92,0,0.06);
+  color: var(--accent-primary);
+}
+.adm-slot.booked.s-confirmed {
+  border-color: rgba(34,197,94,0.4);
+  background: rgba(34,197,94,0.07);
+  color: #22c55e;
+}
+
+.adm-slot:disabled { opacity: 0.4; cursor: not-allowed; }
+.adm-slot.past     { opacity: 0.3; }
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .admin-main { padding: 1.5rem 1rem 3rem; }
@@ -755,4 +902,6 @@
   .admin-toggle-row { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
   .admin-toggle-control { flex-direction: row; align-items: center; }
   .adm-btn { padding: 0.85rem 1.25rem; }
+  .adm-avail-grid { grid-template-columns: repeat(3, 1fr); gap: 0.3rem; padding: 0.75rem; }
+  .adm-avail-week-label { display: none; }
 }

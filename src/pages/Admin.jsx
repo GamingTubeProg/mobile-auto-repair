@@ -39,6 +39,33 @@ function getEffective(stored) {
   );
 }
 
+/* ── Availability calendar helpers ─────────────────────── */
+const ADM_DAY_NAMES  = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const ADM_MONTH_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const ADM_TIME_SLOTS = [
+  { id: '09:00-11:00', label: '09–11 Uhr' },
+  { id: '11:00-13:00', label: '11–13 Uhr' },
+  { id: '13:00-15:00', label: '13–15 Uhr' },
+  { id: '15:00-17:00', label: '15–17 Uhr' },
+];
+
+function admDateStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function admWeekDates(monday) {
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
+  });
+}
+
+function admThisMonday() {
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return d;
+}
+
 const STATUS_LABELS = {
   pending:   { label: 'Ausstehend',  color: 'orange' },
   confirmed: { label: 'Bestätigt',   color: 'green'  },
@@ -73,6 +100,12 @@ const Admin = () => {
   const [bookingsFilter,  setBookingsFilter]  = useState('upcoming'); // 'upcoming' | 'all'
   const [statusUpdating,  setStatusUpdating]  = useState(null); // booking id being updated
 
+  // ── Availability state ───────────────────────────────────
+  const [availWeekStart, setAvailWeekStart] = useState(admThisMonday);
+  const [availData,      setAvailData]      = useState([]);
+  const [availLoading,   setAvailLoading]   = useState(true);
+  const [slotToggling,   setSlotToggling]   = useState(null); // 'YYYY-MM-DD|slotId'
+
   const effective = getEffective(stored);
 
   // Check if local admin server is reachable
@@ -97,6 +130,7 @@ const Admin = () => {
         query = query.gte('booking_date', today);
       }
 
+      query = query.neq('status', 'blocked');
       const { data, error } = await query;
       if (!error) setBookings(data ?? []);
       setBookingsLoading(false);
@@ -114,6 +148,65 @@ const Admin = () => {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
     }
     setStatusUpdating(null);
+  };
+
+  // Load availability data for the displayed week
+  useEffect(() => {
+    async function loadAvail() {
+      setAvailLoading(true);
+      const startStr = admDateStr(availWeekStart);
+      const endDate  = new Date(availWeekStart); endDate.setDate(endDate.getDate() + 5);
+      const endStr   = admDateStr(endDate);
+      const { data } = await supabase
+        .from('bookings')
+        .select('id, booking_date, time_slot, status, name')
+        .gte('booking_date', startStr)
+        .lte('booking_date', endStr)
+        .neq('status', 'cancelled');
+      setAvailData(data ?? []);
+      setAvailLoading(false);
+    }
+    loadAvail();
+  }, [availWeekStart]);
+
+  const toggleSlot = async (dateStr, slotId) => {
+    const key      = `${dateStr}|${slotId}`;
+    setSlotToggling(key);
+    const existing = availData.find(
+      b => b.booking_date === dateStr && b.time_slot === slotId
+    );
+    if (existing?.status === 'blocked') {
+      // Unblock: soft-delete by setting status to cancelled
+      const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', existing.id);
+      if (!error) setAvailData(prev => prev.filter(b => b.id !== existing.id));
+    } else if (!existing) {
+      // Block: insert a placeholder booking
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert({
+          name:         '_BLOCKED_',
+          phone:        '',
+          vehicle:      '',
+          service_type: 'blocked',
+          booking_date: dateStr,
+          time_slot:    slotId,
+          status:       'blocked',
+        })
+        .select('id, booking_date, time_slot, status, name')
+        .single();
+      if (!error && data) setAvailData(prev => [...prev, data]);
+    }
+    // If it's a real customer booking → do nothing (can't block over it)
+    setSlotToggling(null);
+  };
+
+  // Week navigation for availability
+  const canGoPrevAvailWeek = availWeekStart > admThisMonday();
+  const prevAvailWeek = () => {
+    const w = new Date(availWeekStart); w.setDate(w.getDate() - 7); setAvailWeekStart(w);
+  };
+  const nextAvailWeek = () => {
+    const w = new Date(availWeekStart); w.setDate(w.getDate() + 7); setAvailWeekStart(w);
   };
 
   const handleDeploy = async () => {
@@ -299,6 +392,100 @@ const Admin = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </section>
+
+        {/* AVAILABILITY SECTION */}
+        <section className="admin-section">
+          <div className="admin-bookings-header">
+            <div>
+              <h2 className="admin-section-title">Verfügbarkeit verwalten</h2>
+              <p className="admin-section-sub" style={{ marginBottom: 0 }}>
+                <span className="adm-legend-item free">Frei</span> — klicken zum Sperren &nbsp;·&nbsp;
+                <span className="adm-legend-item blocked">Gesperrt</span> — klicken zum Entsperren &nbsp;·&nbsp;
+                <span className="adm-legend-item booked">Gebucht</span> — Kundenbuchung, nicht editierbar
+              </p>
+            </div>
+            <div className="admin-bookings-filter" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                className="adm-btn adm-btn-small adm-btn-ghost"
+                onClick={prevAvailWeek}
+                disabled={!canGoPrevAvailWeek}
+              >
+                ←
+              </button>
+              <span className="adm-avail-week-label">
+                {(() => {
+                  const dates = admWeekDates(availWeekStart);
+                  return `${dates[0].getDate()}. ${ADM_MONTH_SHORT[dates[0].getMonth()]} – ${dates[5].getDate()}. ${ADM_MONTH_SHORT[dates[5].getMonth()]} ${dates[5].getFullYear()}`;
+                })()}
+              </span>
+              <button
+                className="adm-btn adm-btn-small adm-btn-ghost"
+                onClick={nextAvailWeek}
+              >
+                →
+              </button>
+            </div>
+          </div>
+
+          {availLoading ? (
+            <div className="admin-bookings-empty">Wird geladen…</div>
+          ) : (
+            <div className="adm-avail-grid">
+              {admWeekDates(availWeekStart).map((date, i) => {
+                const dateStr  = admDateStr(date);
+                const isPastDay = date < new Date(new Date().setHours(0, 0, 0, 0));
+                return (
+                  <div key={dateStr} className={`adm-avail-col${isPastDay ? ' past' : ''}`}>
+                    <div className="adm-avail-col-hdr">
+                      <span className="adm-avail-col-day">{ADM_DAY_NAMES[i]}</span>
+                      <span className="adm-avail-col-date">
+                        {date.getDate()}. {ADM_MONTH_SHORT[date.getMonth()]}
+                      </span>
+                    </div>
+
+                    {ADM_TIME_SLOTS.map(slot => {
+                      const booking    = availData.find(
+                        b => b.booking_date === dateStr && b.time_slot === slot.id
+                      );
+                      const isBlocked  = booking?.status === 'blocked';
+                      const isBooked   = booking && !isBlocked;
+                      const toggleKey  = `${dateStr}|${slot.id}`;
+                      const isToggling = slotToggling === toggleKey;
+
+                      if (isBooked) {
+                        return (
+                          <div
+                            key={slot.id}
+                            className={`adm-slot booked s-${booking.status}`}
+                            title={`${booking.name} — ${booking.status}`}
+                          >
+                            <span className="adm-slot-time">{slot.label}</span>
+                            <span className="adm-slot-name">{booking.name}</span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={slot.id}
+                          className={`adm-slot${isBlocked ? ' blocked' : ' free'}${isPastDay ? ' past' : ''}`}
+                          onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
+                          disabled={isPastDay || isToggling}
+                          title={isBlocked ? 'Klicken zum Entsperren' : 'Klicken zum Sperren'}
+                        >
+                          <span className="adm-slot-time">{slot.label}</span>
+                          <span className="adm-slot-sub">
+                            {isToggling ? '…' : isBlocked ? 'Gesperrt ✕' : 'Frei'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

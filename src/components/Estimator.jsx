@@ -405,32 +405,35 @@ const Estimator = ({ onRequestPreciseQuote }) => {
               </div>
             </div>
 
-            {/* Single CTA */}
+            {/* Primary CTA: book appointment with pre-filled data */}
             <div className="est-single-cta">
               <div className="est-single-cta-card">
                 <span className="est-choice-icon"><ClipboardCheck /></span>
                 <div className="est-single-cta-text">
-                  <h5>Request a Precise Quote</h5>
+                  <h5>Termin buchen</h5>
                   <p>
-                    Your details above are already filled in. We&apos;ll send a precise quote
-                    before any work begins. The final price may adjust slightly based on what
-                    we find on-site — you always approve it first.
+                    Fahrzeug, Problem und Symptome werden automatisch übernommen —
+                    du wählst nur noch Datum und Uhrzeit.
                   </p>
                 </div>
                 <button
                   type="button"
                   className="btn btn-primary btn-arrow est-single-cta-btn"
-                  onClick={handleRequestQuote}
+                  onClick={() => {
+                    sessionStorage.setItem('mar_estimate', JSON.stringify(buildPayload()));
+                    window.location.href = '/booking';
+                  }}
                 >
-                  Request a precise quote
+                  Termin buchen
                   <span className="btn-arrow-icon">→</span>
                 </button>
               </div>
             </div>
 
             <div className="est-result-extra">
-              <button type="button" className="est-link-btn" onClick={reset}>← Start a new estimate</button>
-              <a href="tel:519-617-7214" className="est-link-btn">Or call directly: 519-617-7214</a>
+              <button type="button" className="est-link-btn" onClick={reset}>← Neue Schätzung</button>
+              <button type="button" className="est-link-btn" onClick={handleRequestQuote}>Nur Kostenvoranschlag anfragen →</button>
+              <a href="tel:519-617-7214" className="est-link-btn">Direkt anrufen: 519-617-7214</a>
             </div>
           </div>
         )}

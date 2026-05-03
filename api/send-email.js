@@ -83,7 +83,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         from:    'Mobile Auto Repair <onboarding@resend.dev>',
-        to:      ['Mobile.Automotive@hotmail.com'],
+        to:      ['mobile.automotive@hotmail.com'],
         subject,
         text:    textBody,
         html:    htmlBody,

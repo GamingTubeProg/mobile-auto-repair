@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         from:    'Mobile Auto Repair <onboarding@resend.dev>',
-        to:      ['Mobile.Automotive@hotmail.com'],
+        to:      ['mobile.automotive@hotmail.com'],
         subject: 'Config test — Mobile Auto Repair',
         text:    'This is an automated configuration test from the check-config endpoint.',
       }),

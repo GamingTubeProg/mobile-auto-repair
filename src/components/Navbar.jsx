@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Navbar.css';
 import FEATURES from '../config/features';
 
-const Navbar = ({ tuningPage = false, bookingPage = false }) => {
+const Navbar = ({ tuningPage = false, bookingPage = false, reviewsPage = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -15,7 +15,7 @@ const Navbar = ({ tuningPage = false, bookingPage = false }) => {
   const close = () => setMenuOpen(false);
 
   // On sub-pages, anchor links need the home-page prefix
-  const pfx = (tuningPage || bookingPage) ? '/' : '';
+  const pfx = (tuningPage || bookingPage || reviewsPage) ? '/' : '';
 
   return (
     <nav className={`navbar${scrolled ? ' is-scrolled' : ''}`}>

@@ -10,6 +10,7 @@ import {
 import Estimator from '../components/Estimator';
 import BrandMarquee from '../components/BrandMarquee';
 import WhyChooseMe from '../components/WhyChooseMe';
+import Testimonials from '../components/Testimonials';
 import FEATURES from '../config/features';
 
 const services = [
@@ -527,6 +528,9 @@ const Home = () => {
           <WhyChooseMe />
         </div>
       </section>
+
+      {/* TESTIMONIALS — auto-hidden when no approved reviews exist yet */}
+      <Testimonials />
 
       {/* CONTACT */}
       <section className="contact-split" id="contact">

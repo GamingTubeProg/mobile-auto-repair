@@ -1,0 +1,155 @@
+/* ══════════════════════════════════════════════════════════
+   Testimonials Section — Homepage
+   ══════════════════════════════════════════════════════════ */
+
+.testimonials {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(230,92,0,0.06), transparent 55%),
+    var(--bg-dark);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ── Header ── */
+.testimonials-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.t-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.t-avg {
+  font-family: var(--font-heading);
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.t-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.t-count strong {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* ── Grid ── */
+.t-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+/* ── Card ── */
+.t-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 4px;
+  padding: 2rem 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: transform 0.25s, border-color 0.25s;
+}
+
+.t-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(230,92,0,0.4);
+  border-top-color: var(--accent-primary);
+}
+
+.t-quote-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 28px;
+  height: 28px;
+  color: rgba(230,92,0,0.18);
+  stroke-width: 1.5;
+}
+
+/* ── Stars ── */
+.t-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent-primary);
+}
+
+/* ── Comment ── */
+.t-comment {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.85);
+  margin: 0;
+  flex: 1;
+  /* Subtle quote styling */
+  font-style: italic;
+}
+
+/* ── Meta footer ── */
+.t-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.t-name {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.t-info {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ── CTA row ── */
+.t-cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 2rem 0 0;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.t-cta-text {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .t-grid { grid-template-columns: 1fr; }
+  .t-summary { gap: 0.5rem; }
+  .t-avg { font-size: 1.7rem; }
+  .t-count { font-size: 0.8rem; }
+}

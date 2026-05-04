@@ -106,6 +106,12 @@ const Admin = () => {
   const [availLoading,   setAvailLoading]   = useState(true);
   const [slotToggling,   setSlotToggling]   = useState(null); // 'YYYY-MM-DD|slotId'
 
+  // ── Reviews state ────────────────────────────────────────
+  const [reviews,        setReviews]        = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsFilter,  setReviewsFilter]  = useState('pending'); // 'pending' | 'approved' | 'all'
+  const [reviewUpdating, setReviewUpdating] = useState(null);      // review id
+
   const effective = getEffective(stored);
 
   // Check if local admin server is reachable
@@ -198,6 +204,51 @@ const Admin = () => {
     }
     // If it's a real customer booking → do nothing (can't block over it)
     setSlotToggling(null);
+  };
+
+  // Load reviews
+  useEffect(() => {
+    async function loadReviews() {
+      setReviewsLoading(true);
+      let query = supabase
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (reviewsFilter !== 'all') {
+        query = query.eq('status', reviewsFilter);
+      }
+      const { data } = await query;
+      setReviews(data ?? []);
+      setReviewsLoading(false);
+    }
+    loadReviews();
+  }, [reviewsFilter]);
+
+  const updateReviewStatus = async (id, status) => {
+    setReviewUpdating(id);
+    const { error } = await supabase
+      .from('reviews')
+      .update({ status })
+      .eq('id', id);
+    if (!error) {
+      // If the new status no longer matches the active filter, drop it from the list
+      if (reviewsFilter !== 'all' && reviewsFilter !== status) {
+        setReviews(prev => prev.filter(r => r.id !== id));
+      } else {
+        setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      }
+    }
+    setReviewUpdating(null);
+  };
+
+  const deleteReview = async (id) => {
+    if (!window.confirm('Delete this review permanently? This cannot be undone.')) return;
+    setReviewUpdating(id);
+    const { error } = await supabase.from('reviews').delete().eq('id', id);
+    if (!error) {
+      setReviews(prev => prev.filter(r => r.id !== id));
+    }
+    setReviewUpdating(null);
   };
 
   // Week navigation for availability
@@ -486,6 +537,111 @@ const Admin = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </section>
+
+        {/* REVIEWS SECTION */}
+        <section className="admin-section">
+          <div className="admin-bookings-header">
+            <div>
+              <h2 className="admin-section-title">Customer Reviews</h2>
+              <p className="admin-section-sub" style={{ marginBottom: 0 }}>
+                Moderate customer reviews. Only <strong>approved</strong> reviews appear on the homepage.
+              </p>
+            </div>
+            <div className="admin-bookings-filter">
+              {[
+                { id: 'pending',  label: 'Pending'  },
+                { id: 'approved', label: 'Approved' },
+                { id: 'all',      label: 'All'      },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  className={`adm-btn adm-btn-small${reviewsFilter === f.id ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
+                  onClick={() => setReviewsFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {reviewsLoading ? (
+            <div className="admin-bookings-empty">Loading reviews…</div>
+          ) : reviews.length === 0 ? (
+            <div className="admin-bookings-empty">
+              {reviewsFilter === 'pending'  && 'No pending reviews.'}
+              {reviewsFilter === 'approved' && 'No approved reviews yet.'}
+              {reviewsFilter === 'all'      && 'No reviews submitted yet.'}
+            </div>
+          ) : (
+            <div className="admin-reviews-list">
+              {reviews.map(r => (
+                <article key={r.id} className={`adm-review-card status-${r.status}`}>
+                  <header className="adm-review-head">
+                    <div className="adm-review-rating" aria-label={`${r.rating} out of 5`}>
+                      {'★'.repeat(r.rating)}<span className="dim">{'★'.repeat(5 - r.rating)}</span>
+                    </div>
+                    <span className={`abt-badge abt-badge-${
+                      r.status === 'approved' ? 'green' :
+                      r.status === 'pending'  ? 'orange' : 'grey'
+                    }`}>
+                      {r.status}
+                    </span>
+                  </header>
+
+                  <p className="adm-review-comment">{r.comment}</p>
+
+                  <div className="adm-review-meta">
+                    <strong>{r.customer_name}</strong>
+                    {r.vehicle && <span> · {r.vehicle}</span>}
+                    {r.service_type && SERVICE_LABELS[r.service_type] && (
+                      <span> · {SERVICE_LABELS[r.service_type]}</span>
+                    )}
+                    <span className="adm-review-date">
+                      {new Date(r.created_at).toLocaleDateString('en-CA')}
+                    </span>
+                  </div>
+
+                  <div className="adm-review-actions">
+                    {r.status !== 'approved' && (
+                      <button
+                        className="abt-action-btn confirm"
+                        disabled={reviewUpdating === r.id}
+                        onClick={() => updateReviewStatus(r.id, 'approved')}
+                      >
+                        Approve
+                      </button>
+                    )}
+                    {r.status !== 'hidden' && (
+                      <button
+                        className="abt-action-btn cancel"
+                        disabled={reviewUpdating === r.id}
+                        onClick={() => updateReviewStatus(r.id, 'hidden')}
+                      >
+                        Hide
+                      </button>
+                    )}
+                    {r.status === 'hidden' && (
+                      <button
+                        className="abt-action-btn complete"
+                        disabled={reviewUpdating === r.id}
+                        onClick={() => updateReviewStatus(r.id, 'pending')}
+                      >
+                        Mark Pending
+                      </button>
+                    )}
+                    <button
+                      className="abt-action-btn cancel adm-review-delete"
+                      disabled={reviewUpdating === r.id}
+                      onClick={() => deleteReview(r.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
         </section>

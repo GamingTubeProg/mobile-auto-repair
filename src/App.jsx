@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import Admin from './pages/Admin';
 import Tuning from './pages/Tuning';
 import Booking from './pages/Booking';
+import Reviews from './pages/Reviews';
 import AdminLogin from './components/AdminLogin';
 import { supabase } from './lib/supabase';
 
@@ -54,6 +55,9 @@ function App() {
 
   // ── /booking route ────────────────────────────────────────
   if (path === '/booking') return <Booking />;
+
+  // ── /review route ────────────────────────────────────────
+  if (path === '/review' || path === '/reviews') return <Reviews />;
 
   // ── /tuning route ─────────────────────────────────────────
   if (path === '/tuning') return <Tuning />;

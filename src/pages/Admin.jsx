@@ -67,18 +67,18 @@ function admThisMonday() {
 }
 
 const STATUS_LABELS = {
-  pending:   { label: 'Ausstehend',  color: 'orange' },
-  confirmed: { label: 'Bestätigt',   color: 'green'  },
-  completed: { label: 'Abgeschlossen', color: 'blue' },
-  cancelled: { label: 'Abgesagt',    color: 'red'    },
+  pending:   { label: 'Pending',   color: 'orange' },
+  confirmed: { label: 'Confirmed', color: 'green'  },
+  completed: { label: 'Completed', color: 'blue'   },
+  cancelled: { label: 'Cancelled', color: 'red'    },
 };
 
 const SERVICE_LABELS = {
-  diagnose:  'Diagnose',
-  reparatur: 'Reparatur',
-  tuning:    'ECU-Tuning',
-  wartung:   'Wartung',
-  sonstiges: 'Sonstiges',
+  diagnose:  'Diagnostics',
+  reparatur: 'Repair',
+  tuning:    'ECU Tuning',
+  wartung:   'Maintenance',
+  sonstiges: 'Other',
 };
 
 function formatDate(dateStr) {
@@ -224,7 +224,7 @@ const Admin = () => {
         setDeployStatus({ error: data.message || 'Unbekannter Fehler.' });
       }
     } catch {
-      setDeployStatus({ error: 'Admin-Server nicht erreichbar. Bitte über den Desktop-Shortcut starten.' });
+      setDeployStatus({ error: 'Admin server unreachable. Please start it via the desktop shortcut.' });
     }
     setTimeout(() => setDeployStatus(null), 10000);
   };
@@ -287,9 +287,9 @@ const Admin = () => {
         <section className="admin-section">
           <div className="admin-bookings-header">
             <div>
-              <h2 className="admin-section-title">Terminbuchungen</h2>
+              <h2 className="admin-section-title">Appointments</h2>
               <p className="admin-section-sub" style={{ marginBottom: 0 }}>
-                Eingehende Terminanfragen verwalten und bestätigen.
+                Manage and confirm incoming appointment requests.
               </p>
             </div>
             <div className="admin-bookings-filter">
@@ -297,36 +297,36 @@ const Admin = () => {
                 className={`adm-btn adm-btn-small${bookingsFilter === 'upcoming' ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
                 onClick={() => setBookingsFilter('upcoming')}
               >
-                Bevorstehend
+                Upcoming
               </button>
               <button
                 className={`adm-btn adm-btn-small${bookingsFilter === 'all' ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
                 onClick={() => setBookingsFilter('all')}
               >
-                Alle
+                All
               </button>
             </div>
           </div>
 
           {bookingsLoading ? (
-            <div className="admin-bookings-empty">Buchungen werden geladen…</div>
+            <div className="admin-bookings-empty">Loading bookings…</div>
           ) : bookings.length === 0 ? (
             <div className="admin-bookings-empty">
-              {bookingsFilter === 'upcoming' ? 'Keine bevorstehenden Termine.' : 'Keine Buchungen vorhanden.'}
+              {bookingsFilter === 'upcoming' ? 'No upcoming appointments.' : 'No bookings found.'}
             </div>
           ) : (
             <div className="admin-bookings-table-wrap">
               <table className="admin-bookings-table">
                 <thead>
                   <tr>
-                    <th>Datum</th>
-                    <th>Uhrzeit</th>
+                    <th>Date</th>
+                    <th>Time</th>
                     <th>Service</th>
                     <th>Name</th>
-                    <th>Telefon</th>
-                    <th>Fahrzeug</th>
+                    <th>Phone</th>
+                    <th>Vehicle</th>
                     <th>Status</th>
-                    <th>Aktionen</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -354,14 +354,14 @@ const Admin = () => {
                                 disabled={statusUpdating === b.id}
                                 onClick={() => updateBookingStatus(b.id, 'confirmed')}
                               >
-                                Bestätigen
+                                Confirm
                               </button>
                               <button
                                 className="abt-action-btn cancel"
                                 disabled={statusUpdating === b.id}
                                 onClick={() => updateBookingStatus(b.id, 'cancelled')}
                               >
-                                Absagen
+                                Cancel
                               </button>
                             </>
                           )}
@@ -372,14 +372,14 @@ const Admin = () => {
                                 disabled={statusUpdating === b.id}
                                 onClick={() => updateBookingStatus(b.id, 'completed')}
                               >
-                                Abschließen
+                                Complete
                               </button>
                               <button
                                 className="abt-action-btn cancel"
                                 disabled={statusUpdating === b.id}
                                 onClick={() => updateBookingStatus(b.id, 'cancelled')}
                               >
-                                Absagen
+                                Cancel
                               </button>
                             </>
                           )}
@@ -400,11 +400,11 @@ const Admin = () => {
         <section className="admin-section">
           <div className="admin-bookings-header">
             <div>
-              <h2 className="admin-section-title">Verfügbarkeit verwalten</h2>
+              <h2 className="admin-section-title">Manage Availability</h2>
               <p className="admin-section-sub" style={{ marginBottom: 0 }}>
-                <span className="adm-legend-item free">Frei</span> — klicken zum Sperren &nbsp;·&nbsp;
-                <span className="adm-legend-item blocked">Gesperrt</span> — klicken zum Entsperren &nbsp;·&nbsp;
-                <span className="adm-legend-item booked">Gebucht</span> — Kundenbuchung, nicht editierbar
+                <span className="adm-legend-item free">Available</span> — click to block &nbsp;·&nbsp;
+                <span className="adm-legend-item blocked">Blocked</span> — click to unblock &nbsp;·&nbsp;
+                <span className="adm-legend-item booked">Booked</span> — customer booking, read-only
               </p>
             </div>
             <div className="admin-bookings-filter" style={{ alignItems: 'center', gap: '0.5rem' }}>
@@ -431,7 +431,7 @@ const Admin = () => {
           </div>
 
           {availLoading ? (
-            <div className="admin-bookings-empty">Wird geladen…</div>
+            <div className="admin-bookings-empty">Loading…</div>
           ) : (
             <div className="adm-avail-grid">
               {admWeekDates(availWeekStart).map((date, i) => {
@@ -474,11 +474,11 @@ const Admin = () => {
                           className={`adm-slot${isBlocked ? ' blocked' : ' free'}${isPastDay ? ' past' : ''}`}
                           onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
                           disabled={isPastDay || isToggling}
-                          title={isBlocked ? 'Klicken zum Entsperren' : 'Klicken zum Sperren'}
+                          title={isBlocked ? 'Click to unblock' : 'Click to block'}
                         >
                           <span className="adm-slot-time">{slot.label}</span>
                           <span className="adm-slot-sub">
-                            {isToggling ? '…' : isBlocked ? 'Gesperrt ✕' : 'Frei'}
+                            {isToggling ? '…' : isBlocked ? 'Blocked ✕' : 'Available'}
                           </span>
                         </button>
                       );
@@ -552,18 +552,18 @@ const Admin = () => {
 
         {/* DEPLOY SECTION */}
         <section className="admin-section">
-          <h2 className="admin-section-title">Permanent deployen</h2>
+          <h2 className="admin-section-title">Deploy to Production</h2>
           <p className="admin-section-sub">
-            Ein Klick schreibt <code>features.js</code>, commitet und pusht zu GitHub.
-            Vercel deployt automatisch — alle Besucher sehen die Änderung in ~60 Sekunden.
+            One click writes <code>features.js</code>, commits and pushes to GitHub.
+            Vercel deploys automatically — all visitors see the change in ~60 seconds.
           </p>
 
           {/* Server status indicator */}
           <div className={`admin-server-status${serverOnline === false ? ' offline' : serverOnline ? ' online' : ''}`}>
             <span className="admin-server-dot" />
-            {serverOnline === true  && 'Admin-Server läuft — Deploy bereit.'}
-            {serverOnline === false && 'Admin-Server offline. Starte ihn über den Desktop-Shortcut.'}
-            {serverOnline === null  && 'Verbindung wird geprüft…'}
+            {serverOnline === true  && 'Admin server running — ready to deploy.'}
+            {serverOnline === false && 'Admin server offline. Start it via the desktop shortcut.'}
+            {serverOnline === null  && 'Checking connection…'}
           </div>
 
           {/* One-click deploy button */}
@@ -573,18 +573,18 @@ const Admin = () => {
               onClick={handleDeploy}
               disabled={deployStatus === 'deploying' || serverOnline === false}
             >
-              {deployStatus === 'deploying' ? '⏳  Deploying…' : '🚀  Jetzt deployen'}
+              {deployStatus === 'deploying' ? '⏳  Deploying…' : '🚀  Deploy Now'}
             </button>
 
             {/* Status feedback */}
             {deployStatus === 'success' && (
               <div className="admin-deploy-status is-success">
-                ✓ Deployed! Vercel baut jetzt neu — in ~60 Sekunden live für alle Besucher.
+                ✓ Deployed! Vercel is rebuilding — live for all visitors in ~60 seconds.
               </div>
             )}
             {deployStatus === 'no-change' && (
               <div className="admin-deploy-status is-no-change">
-                ✓ Bereits aktuell — keine Änderungen vorhanden.
+                ✓ Already up to date — no changes to deploy.
               </div>
             )}
             {deployStatus && typeof deployStatus === 'object' && deployStatus.error && (
@@ -596,14 +596,14 @@ const Admin = () => {
 
           {/* Manual fallback (collapsed) */}
           <details className="admin-manual-fallback">
-            <summary>Manuell deployen (Fallback)</summary>
+            <summary>Deploy Manually (Fallback)</summary>
             <div className="admin-manual-fallback-body">
-              <p>Falls der automatische Deploy nicht funktioniert: Code kopieren, in <code>src/config/features.js</code> einfügen und pushen.</p>
+              <p>If the automatic deploy doesn&apos;t work: copy the code, paste it into <code>src/config/features.js</code> and push.</p>
               <div className="admin-code-block">
                 <div className="admin-code-header">
                   <span>src/config/features.js — DEFAULTS block</span>
                   <button className="adm-btn adm-btn-small" onClick={handleCopy}>
-                    {copied ? '✓ Kopiert!' : 'Kopieren'}
+                    {copied ? '✓ Copied!' : 'Copy'}
                   </button>
                 </div>
                 <pre className="admin-code"><code>{codeSnippet}</code></pre>

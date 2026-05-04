@@ -27,9 +27,15 @@ const Navbar = ({ tuningPage = false, bookingPage = false }) => {
         </div>
         <ul className={`nav-links${menuOpen ? ' is-open' : ''}`}>
           <li><a href={pfx + '#services'} onClick={close}>Services</a></li>
-          {FEATURES.ESTIMATOR_ENABLED && (
-            <li><a href={pfx + '#estimator'} onClick={close}>Estimate</a></li>
-          )}
+          <li>
+            <a
+              href="/booking"
+              onClick={close}
+              className={bookingPage ? 'nav-active' : ''}
+            >
+              Book Appointment
+            </a>
+          </li>
           <li>
             <a
               href="/tuning"
@@ -41,13 +47,23 @@ const Navbar = ({ tuningPage = false, bookingPage = false }) => {
           </li>
           <li><a href={pfx + '#about'} onClick={close}>About</a></li>
           <li>
-            <a
-              href="/booking"
-              onClick={close}
-              className={`btn btn-primary btn-small${bookingPage ? ' nav-active' : ''}`}
-            >
-              Termin buchen
-            </a>
+            {FEATURES.ESTIMATOR_ENABLED ? (
+              <a
+                href={pfx + '#estimator'}
+                onClick={close}
+                className="btn btn-primary btn-small"
+              >
+                Get Estimate
+              </a>
+            ) : (
+              <a
+                href="/booking"
+                onClick={close}
+                className={`btn btn-primary btn-small${bookingPage ? ' nav-active' : ''}`}
+              >
+                Book Appointment
+              </a>
+            )}
           </li>
         </ul>
         <button

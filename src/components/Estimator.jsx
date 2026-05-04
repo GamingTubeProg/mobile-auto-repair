@@ -405,15 +405,15 @@ const Estimator = ({ onRequestPreciseQuote }) => {
               </div>
             </div>
 
-            {/* Primary CTA: book appointment with pre-filled data */}
-            <div className="est-single-cta">
-              <div className="est-single-cta-card">
+            {/* Dual CTA — Book Appointment OR Request a Quote */}
+            <div className="est-dual-cta">
+              <div className="est-single-cta-card est-cta-book">
                 <span className="est-choice-icon"><ClipboardCheck /></span>
                 <div className="est-single-cta-text">
-                  <h5>Termin buchen</h5>
+                  <h5>Book Appointment</h5>
                   <p>
-                    Fahrzeug, Problem und Symptome werden automatisch übernommen —
-                    du wählst nur noch Datum und Uhrzeit.
+                    Your vehicle, problem and symptoms are automatically carried over —
+                    just pick a date and time.
                   </p>
                 </div>
                 <button
@@ -424,16 +424,33 @@ const Estimator = ({ onRequestPreciseQuote }) => {
                     window.location.href = '/booking';
                   }}
                 >
-                  Termin buchen
+                  Book Appointment
                   <span className="btn-arrow-icon">→</span>
+                </button>
+              </div>
+
+              <div className="est-single-cta-card est-cta-quote">
+                <span className="est-choice-icon"><ClipboardCheck /></span>
+                <div className="est-single-cta-text">
+                  <h5>Request a Quote</h5>
+                  <p>
+                    Your details are pre-filled. We&apos;ll send a precise quote
+                    before any work begins — no obligation.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost est-single-cta-btn"
+                  onClick={handleRequestQuote}
+                >
+                  Request a Quote →
                 </button>
               </div>
             </div>
 
             <div className="est-result-extra">
-              <button type="button" className="est-link-btn" onClick={reset}>← Neue Schätzung</button>
-              <button type="button" className="est-link-btn" onClick={handleRequestQuote}>Nur Kostenvoranschlag anfragen →</button>
-              <a href="tel:519-617-7214" className="est-link-btn">Direkt anrufen: 519-617-7214</a>
+              <button type="button" className="est-link-btn" onClick={reset}>← New estimate</button>
+              <a href="tel:519-617-7214" className="est-link-btn">Call directly: 519-617-7214</a>
             </div>
           </div>
         )}

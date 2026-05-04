@@ -16,7 +16,7 @@ export default function AdminLogin() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError('Falsche E-Mail-Adresse oder Passwort.');
+      setError('Invalid email address or password.');
       setLoading(false);
     }
     // On success: App.jsx onAuthStateChange fires → Admin renders automatically
@@ -29,12 +29,12 @@ export default function AdminLogin() {
           <h1 className="admin-logo">
             MOBILE <span>AUTO REPAIR</span>
           </h1>
-          <p className="admin-login-sub">Admin — Bitte anmelden</p>
+          <p className="admin-login-sub">Admin — Sign In</p>
 
           <form onSubmit={handleSubmit} className="admin-login-form">
             <input
               type="email"
-              placeholder="E-Mail-Adresse"
+              placeholder="Email address"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
@@ -43,7 +43,7 @@ export default function AdminLogin() {
             />
             <input
               type="password"
-              placeholder="Passwort"
+              placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -55,7 +55,7 @@ export default function AdminLogin() {
               className="adm-btn adm-btn-primary"
               disabled={loading}
             >
-              {loading ? 'Anmelden…' : 'Anmelden →'}
+              {loading ? 'Signing in…' : 'Sign In →'}
             </button>
           </form>
         </div>

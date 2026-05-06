@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Star, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './Testimonials.css';
@@ -41,6 +41,7 @@ function formatRelative(dateStr) {
 export default function Testimonials() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +60,33 @@ export default function Testimonials() {
     load();
   }, []);
 
+  // Re-attach scroll-reveal observer for elements rendered AFTER the page's
+  // top-level observer ran. The Home page sets up its IntersectionObserver
+  // synchronously on mount, but this section's elements are added later
+  // (after the async fetch), so the original observer never sees them.
+  // Without this they stay at opacity:0 forever — invisible empty space.
+  useEffect(() => {
+    if (loading || !sectionRef.current) return;
+    const targets = sectionRef.current.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach(t => t.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+    );
+    targets.forEach(t => io.observe(t));
+    return () => io.disconnect();
+  }, [loading, reviews]);
+
   // While loading, render nothing (avoid flash of empty state)
   if (loading) return null;
 
@@ -66,7 +94,7 @@ export default function Testimonials() {
   // entry point on the homepage so customers can submit feedback.
   if (reviews.length === 0) {
     return (
-      <section className="testimonials testimonials-empty section" id="testimonials">
+      <section className="testimonials testimonials-empty section" id="testimonials" ref={sectionRef}>
         <div className="container">
           <header className="testimonials-header" data-reveal>
             <span className="subtitle accent-line">Customer Voices</span>
@@ -93,7 +121,7 @@ export default function Testimonials() {
   ).toFixed(1);
 
   return (
-    <section className="testimonials section" id="testimonials">
+    <section className="testimonials section" id="testimonials" ref={sectionRef}>
       <div className="container">
         <header className="testimonials-header" data-reveal>
           <span className="subtitle accent-line">Customer Voices</span>

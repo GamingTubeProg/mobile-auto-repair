@@ -44,12 +44,15 @@ export default function Testimonials() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('reviews')
         .select('id, customer_name, rating, comment, vehicle, service_type, created_at')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(6);
+      if (error) {
+        console.error('[Testimonials] Failed to load reviews:', error);
+      }
       setReviews(data ?? []);
       setLoading(false);
     }

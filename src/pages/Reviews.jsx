@@ -4,21 +4,12 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './Reviews.css';
 
-const SERVICE_OPTIONS = [
-  { id: 'diagnose',  label: 'Diagnostics & Troubleshooting' },
-  { id: 'reparatur', label: 'Repair' },
-  { id: 'tuning',    label: 'ECU Tuning' },
-  { id: 'wartung',   label: 'Maintenance & Inspection' },
-  { id: 'sonstiges', label: 'Other' },
-];
-
 export default function Reviews() {
   const [form, setForm] = useState({
     customer_name: '',
     rating:        5,
     comment:       '',
     vehicle:       '',
-    service_type:  '',
   });
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting,  setSubmitting]  = useState(false);
@@ -41,7 +32,6 @@ export default function Reviews() {
       rating:        form.rating,
       comment:       form.comment.trim(),
       vehicle:       form.vehicle.trim() || null,
-      service_type:  form.service_type || null,
     });
 
     if (error) {
@@ -118,20 +108,6 @@ export default function Reviews() {
                   {hoverRating || form.rating}/5
                 </span>
               </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="r-service">Service (optional)</label>
-              <select
-                id="r-service"
-                value={form.service_type}
-                onChange={e => setForm(f => ({ ...f, service_type: e.target.value }))}
-              >
-                <option value="">Select service…</option>
-                {SERVICE_OPTIONS.map(s => (
-                  <option key={s.id} value={s.id}>{s.label}</option>
-                ))}
-              </select>
             </div>
 
             <div className="form-group">

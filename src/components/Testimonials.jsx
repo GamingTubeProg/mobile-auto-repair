@@ -56,9 +56,34 @@ export default function Testimonials() {
     load();
   }, []);
 
-  // Don't render the section if there are no approved reviews — keeps the
-  // homepage clean while we're still collecting the first wave of feedback.
-  if (loading || reviews.length === 0) return null;
+  // While loading, render nothing (avoid flash of empty state)
+  if (loading) return null;
+
+  // Empty state — no reviews yet but we still want a visible "leave a review"
+  // entry point on the homepage so customers can submit feedback.
+  if (reviews.length === 0) {
+    return (
+      <section className="testimonials testimonials-empty section" id="testimonials">
+        <div className="container">
+          <header className="testimonials-header" data-reveal>
+            <span className="subtitle accent-line">Customer Voices</span>
+            <h2 className="title">Share Your <span className="title-accent">Experience.</span></h2>
+            <p className="t-empty-sub">
+              Recent customer? Help others find us by leaving a quick review.
+              It only takes a minute.
+            </p>
+          </header>
+
+          <div className="t-cta-row t-empty-cta" data-reveal>
+            <a href="/review" className="btn btn-primary btn-arrow">
+              Leave a Review
+              <span className="btn-arrow-icon">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const avgRating = (
     reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length

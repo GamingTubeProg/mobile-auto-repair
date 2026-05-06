@@ -429,13 +429,13 @@ export default function Booking() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="b-phone">Phone</label>
+                    <label htmlFor="b-phone">Phone *</label>
                     <input
                       id="b-phone"
                       type="tel"
                       value={form.phone}
                       onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                      placeholder="519-617-7214 (optional, helps us reach you faster)"
+                      placeholder="519-617-7214"
                       autoComplete="tel"
                     />
                   </div>
@@ -470,7 +470,7 @@ export default function Booking() {
                   <button className="btn btn-ghost" onClick={() => setStep(2)}>← Back</button>
                   <button
                     className="btn btn-primary"
-                    disabled={!form.name.trim() || submitting}
+                    disabled={!form.name.trim() || !form.phone.trim() || submitting}
                     onClick={handleSubmit}
                   >
                     {submitting ? 'Booking…' : 'Book Appointment →'}
@@ -500,11 +500,9 @@ export default function Booking() {
               <div className="bsum-row">
                 <span>Name</span><strong>{form.name}</strong>
               </div>
-              {form.phone && (
-                <div className="bsum-row">
-                  <span>Phone</span><strong>{form.phone}</strong>
-                </div>
-              )}
+              <div className="bsum-row">
+                <span>Phone</span><strong>{form.phone}</strong>
+              </div>
             </div>
             <a href="/" className="btn btn-primary">Back to Homepage →</a>
           </div>

@@ -529,9 +529,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* TESTIMONIALS — auto-hidden when no approved reviews exist yet */}
-      <Testimonials />
-
       {/* CONTACT */}
       <section className="contact-split" id="contact">
         {/* is-visible in React className so no re-render ever wipes it out */}
@@ -646,6 +643,10 @@ const Home = () => {
           </form>
         </div>
       </section>
+
+      {/* TESTIMONIALS — placed after the contact form so customer voices
+          close the page after the conversion CTAs */}
+      <Testimonials />
     </div>
   );
 };

@@ -747,6 +747,12 @@
   font-size: 0.85rem;
 }
 
+/* Empty cell placeholder */
+.abt-empty {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
 /* ── Availability section ── */
 .adm-avail-week-label {
   font-family: var(--font-heading);
@@ -976,6 +982,228 @@
   opacity: 0.7;
 }
 
+/* ── Add Entry button (orange accent) ── */
+.adm-btn-add-entry {
+  background: var(--accent-primary);
+  color: var(--bg-dark);
+  border-color: var(--accent-primary);
+}
+.adm-btn-add-entry:hover {
+  background: #ff7a1a;
+  border-color: #ff7a1a;
+}
+
+/* ── Block Day quick button (in each day column header) ── */
+.adm-block-day-btn {
+  font-family: var(--font-heading);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(239, 68, 68, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: transparent;
+  padding: 0.15rem 0.3rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 2px;
+  margin-top: 0.3rem;
+  white-space: nowrap;
+}
+.adm-block-day-btn:hover:not(:disabled) {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+}
+.adm-block-day-btn:disabled { opacity: 0.4; cursor: wait; }
+
+/* ══════════════════════════════════════════════════════════
+   Add Entry Modal
+   ══════════════════════════════════════════════════════════ */
+
+.adm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.adm-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal header */
+.adm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adm-modal-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.adm-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.adm-modal-close:hover { color: var(--text-main); }
+
+/* Mode tabs */
+.adm-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.adm-modal-tab {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+.adm-modal-tab:hover { color: var(--text-main); }
+.adm-modal-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+  background: rgba(230, 92, 0, 0.04);
+}
+
+/* Modal body */
+.adm-modal-body {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.adm-modal-mode-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Form layout */
+.adm-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.adm-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.adm-form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.adm-form-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.adm-form-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.adm-form-input {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.65rem 0.85rem;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.adm-form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+.adm-form-input option { background: var(--bg-dark); }
+
+.adm-form-textarea {
+  resize: vertical;
+  min-height: 78px;
+  line-height: 1.5;
+}
+
+/* Error message inside modal */
+.adm-modal-error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Modal footer */
+.adm-modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1.2rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  position: sticky;
+  bottom: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .admin-main { padding: 1.5rem 1rem 3rem; }
@@ -986,4 +1214,29 @@
   .adm-btn { padding: 0.85rem 1.25rem; }
   .adm-avail-grid { grid-template-columns: repeat(3, 1fr); gap: 0.3rem; padding: 0.75rem; }
   .adm-avail-week-label { display: none; }
+
+  /* Bookings/availability header — wrap nicely + ensure all buttons are visible */
+  .admin-bookings-header { gap: 0.75rem; }
+  .admin-bookings-filter {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .admin-bookings-filter .adm-btn-small {
+    flex: 1 1 auto;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .admin-bookings-filter .adm-btn-add-entry {
+    flex: 1 1 100%;        /* push + Add Entry / + Block Time onto its own row, full width */
+    margin-top: 0.15rem;
+  }
+
+  /* Modal on mobile: slide up from bottom */
+  .adm-modal-overlay { padding: 0; align-items: flex-end; }
+  .adm-modal { max-height: 92vh; border-left: none; border-right: none; border-bottom: none; }
+  .adm-form-row-2col { grid-template-columns: 1fr; }
+  .adm-block-day-btn { font-size: 0.45rem; padding: 0.1rem 0.25rem; }
 }

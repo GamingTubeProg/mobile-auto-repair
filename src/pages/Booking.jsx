@@ -224,10 +224,17 @@ export default function Booking() {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        type:    'booking',
+        subject: `🗓️ New Appointment Request – ${formatDateLong(selDate)} ${slotLabel}${form.name ? ' – ' + form.name : ''}`,
         name:    form.name,
         phone:   form.phone,
-        vehicle: form.vehicle || 'Not specified',
-        details: `NEW APPOINTMENT BOOKING\n\nDate:    ${formatDateLong(selDate)}\nTime:    ${slotLabel}\nService: ${svcLabel}${form.notes ? '\n\nNotes:\n' + form.notes : ''}`,
+        vehicle: form.vehicle,
+        details: [
+          `Date:    ${formatDateLong(selDate)}`,
+          `Time:    ${slotLabel}`,
+          `Service: ${svcLabel}`,
+          form.notes ? `\nNotes:\n${form.notes}` : '',
+        ].filter(Boolean).join('\n'),
       }),
     }).catch(() => {});
 
@@ -422,13 +429,13 @@ export default function Booking() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="b-phone">Phone *</label>
+                    <label htmlFor="b-phone">Phone</label>
                     <input
                       id="b-phone"
                       type="tel"
                       value={form.phone}
                       onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                      placeholder="519-617-7214"
+                      placeholder="519-617-7214 (optional, helps us reach you faster)"
                       autoComplete="tel"
                     />
                   </div>
@@ -463,7 +470,7 @@ export default function Booking() {
                   <button className="btn btn-ghost" onClick={() => setStep(2)}>← Back</button>
                   <button
                     className="btn btn-primary"
-                    disabled={!form.name.trim() || !form.phone.trim() || submitting}
+                    disabled={!form.name.trim() || submitting}
                     onClick={handleSubmit}
                   >
                     {submitting ? 'Booking…' : 'Book Appointment →'}
@@ -493,9 +500,11 @@ export default function Booking() {
               <div className="bsum-row">
                 <span>Name</span><strong>{form.name}</strong>
               </div>
-              <div className="bsum-row">
-                <span>Phone</span><strong>{form.phone}</strong>
-              </div>
+              {form.phone && (
+                <div className="bsum-row">
+                  <span>Phone</span><strong>{form.phone}</strong>
+                </div>
+              )}
             </div>
             <a href="/" className="btn btn-primary">Back to Homepage →</a>
           </div>

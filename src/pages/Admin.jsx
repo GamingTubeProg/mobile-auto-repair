@@ -40,14 +40,42 @@ function getEffective(stored) {
 }
 
 /* ── Availability calendar helpers ─────────────────────── */
-const ADM_DAY_NAMES  = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-const ADM_MONTH_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-const ADM_TIME_SLOTS = [
-  { id: '09:00-11:00', label: '09–11 Uhr' },
-  { id: '11:00-13:00', label: '11–13 Uhr' },
-  { id: '13:00-15:00', label: '13–15 Uhr' },
-  { id: '15:00-17:00', label: '15–17 Uhr' },
+const ADM_DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const ADM_MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const ADM_TIME_SLOTS  = [
+  { id: '09:00-11:00', label: '09–11' },
+  { id: '11:00-13:00', label: '11–13' },
+  { id: '13:00-15:00', label: '13–15' },
+  { id: '15:00-17:00', label: '15–17' },
 ];
+
+/* Slot ranges for the Add Entry / Block Time modal */
+const RANGE_TO_SLOTS = {
+  'slot-0':    ['09:00-11:00'],
+  'slot-1':    ['11:00-13:00'],
+  'slot-2':    ['13:00-15:00'],
+  'slot-3':    ['15:00-17:00'],
+  'morning':   ['09:00-11:00', '11:00-13:00'],
+  'afternoon': ['13:00-15:00', '15:00-17:00'],
+  'full':      ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00'],
+};
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const EMPTY_ENTRY = {
+  date:              todayStr(),
+  range:             'full',
+  reason:            '',
+  name:              '',
+  phone:             '',
+  vehicle:           '',
+  service_type:      'reparatur',
+  time_slot:         '09:00-11:00',
+  appointmentStatus: 'confirmed',
+  notes:             '',
+};
 
 function admDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -91,26 +119,34 @@ const Admin = () => {
   const [stored,       setStored]       = useState(loadStored);
   const [saved,        setSaved]        = useState(false);
   const [copied,       setCopied]       = useState(false);
-  const [deployStatus, setDeployStatus] = useState(null); // null|'checking'|'deploying'|'success'|'no-change'|{error}
-  const [serverOnline, setServerOnline] = useState(null); // null=unknown, true, false
+  const [deployStatus, setDeployStatus] = useState(null);
+  const [serverOnline, setServerOnline] = useState(null);
 
   // ── Bookings state ───────────────────────────────────────
   const [bookings,        setBookings]        = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
-  const [bookingsFilter,  setBookingsFilter]  = useState('upcoming'); // 'upcoming' | 'all'
-  const [statusUpdating,  setStatusUpdating]  = useState(null); // booking id being updated
+  const [bookingsFilter,  setBookingsFilter]  = useState('upcoming');
+  const [statusUpdating,  setStatusUpdating]  = useState(null);
 
   // ── Availability state ───────────────────────────────────
   const [availWeekStart, setAvailWeekStart] = useState(admThisMonday);
   const [availData,      setAvailData]      = useState([]);
   const [availLoading,   setAvailLoading]   = useState(true);
-  const [slotToggling,   setSlotToggling]   = useState(null); // 'YYYY-MM-DD|slotId'
+  const [slotToggling,   setSlotToggling]   = useState(null);
+  const [dayBlocking,    setDayBlocking]    = useState(null);
 
   // ── Reviews state ────────────────────────────────────────
   const [reviews,        setReviews]        = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [reviewsFilter,  setReviewsFilter]  = useState('pending'); // 'pending' | 'approved' | 'all'
-  const [reviewUpdating, setReviewUpdating] = useState(null);      // review id
+  const [reviewsFilter,  setReviewsFilter]  = useState('pending');
+  const [reviewUpdating, setReviewUpdating] = useState(null);
+
+  // ── Add Entry modal state ────────────────────────────────
+  const [entryModal,  setEntryModal]  = useState(false);
+  const [entryMode,   setEntryMode]   = useState('block');
+  const [entryForm,   setEntryForm]   = useState(EMPTY_ENTRY);
+  const [entrySaving, setEntrySaving] = useState(false);
+  const [entryError,  setEntryError]  = useState('');
 
   const effective = getEffective(stored);
 
@@ -130,13 +166,11 @@ const Admin = () => {
         .select('*')
         .order('booking_date', { ascending: true })
         .order('time_slot',    { ascending: true });
-
       if (bookingsFilter === 'upcoming') {
         const today = new Date().toISOString().slice(0, 10);
         query = query.gte('booking_date', today);
       }
-
-      query = query.neq('status', 'blocked');
+      query = query.neq('status', 'blocked').neq('service_type', 'blocked');
       const { data, error } = await query;
       if (!error) setBookings(data ?? []);
       setBookingsLoading(false);
@@ -146,13 +180,8 @@ const Admin = () => {
 
   const updateBookingStatus = async (id, status) => {
     setStatusUpdating(id);
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status })
-      .eq('id', id);
-    if (!error) {
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-    }
+    const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
+    if (!error) setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
     setStatusUpdating(null);
   };
 
@@ -175,48 +204,159 @@ const Admin = () => {
     loadAvail();
   }, [availWeekStart]);
 
+  // Click slot in calendar:
+  //   • free slot       → open Entry modal pre-filled with that date+slot
+  //   • blocked slot    → unblock immediately (one click)
+  //   • booked slot     → no-op (handled by caller)
   const toggleSlot = async (dateStr, slotId) => {
-    const key      = `${dateStr}|${slotId}`;
-    setSlotToggling(key);
-    const existing = availData.find(
-      b => b.booking_date === dateStr && b.time_slot === slotId
-    );
+    const existing = availData.find(b => b.booking_date === dateStr && b.time_slot === slotId);
     if (existing?.status === 'blocked') {
-      // Unblock: soft-delete by setting status to cancelled
+      const key = `${dateStr}|${slotId}`;
+      setSlotToggling(key);
       const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', existing.id);
       if (!error) setAvailData(prev => prev.filter(b => b.id !== existing.id));
+      setSlotToggling(null);
     } else if (!existing) {
-      // Block: insert a placeholder booking
+      // Free slot → open the Entry modal pre-filled with this slot
+      openEntryModal('block', dateStr, slotId);
+    }
+  };
+
+  // Block all free slots on a given day at once
+  const blockDay = async (dateStr) => {
+    setDayBlocking(dateStr);
+    const slotsToBlock = ADM_TIME_SLOTS.filter(
+      slot => !availData.find(b => b.booking_date === dateStr && b.time_slot === slot.id)
+    );
+    if (slotsToBlock.length > 0) {
+      const inserts = slotsToBlock.map(slot => ({
+        name: '_BLOCKED_', phone: '', vehicle: '',
+        service_type: 'blocked', booking_date: dateStr,
+        time_slot: slot.id, status: 'blocked',
+      }));
+      const { data, error } = await supabase
+        .from('bookings').insert(inserts)
+        .select('id, booking_date, time_slot, status, name');
+      if (!error && data) setAvailData(prev => [...prev, ...data]);
+    }
+    setDayBlocking(null);
+  };
+
+  // ── Add Entry modal handlers ──────────────────────────────
+  // mode      : 'block' | 'appointment'
+  // dateStr   : pre-fill date (YYYY-MM-DD), defaults to today
+  // slotId    : pre-select a single slot — sets range to slot-N and time_slot
+  const openEntryModal = (mode = 'block', dateStr = null, slotId = null) => {
+    let initialRange = 'full';
+    if (slotId) {
+      const idx = ADM_TIME_SLOTS.findIndex(s => s.id === slotId);
+      if (idx >= 0) initialRange = `slot-${idx}`;
+    }
+    setEntryMode(mode);
+    setEntryForm({
+      ...EMPTY_ENTRY,
+      date:      dateStr || todayStr(),
+      range:     initialRange,
+      time_slot: slotId || ADM_TIME_SLOTS[0].id,
+    });
+    setEntryError('');
+    setEntryModal(true);
+  };
+
+  const closeEntryModal = () => {
+    if (entrySaving) return;
+    setEntryModal(false);
+    setEntryError('');
+  };
+
+  const handleEntrySave = async () => {
+    setEntryError('');
+    if (!entryForm.date) { setEntryError('Please select a date.'); return; }
+    setEntrySaving(true);
+
+    if (entryMode === 'block') {
+      // Determine which slot IDs to block
+      const slotIds    = RANGE_TO_SLOTS[entryForm.range] ?? [];
+      const freeSlotIds = slotIds.filter(
+        sid => !availData.find(b => b.booking_date === entryForm.date && b.time_slot === sid)
+      );
+      if (freeSlotIds.length === 0) {
+        setEntryError('All selected slots are already booked or blocked.');
+        setEntrySaving(false);
+        return;
+      }
+      const reason  = entryForm.reason.trim();
+      const inserts = freeSlotIds.map(sid => ({
+        name:         reason ? `_BLOCKED_: ${reason}` : '_BLOCKED_',
+        phone:        '',
+        vehicle:      '',
+        service_type: 'blocked',
+        booking_date: entryForm.date,
+        time_slot:    sid,
+        status:       'blocked',
+      }));
+      const { data, error } = await supabase
+        .from('bookings').insert(inserts)
+        .select('id, booking_date, time_slot, status, name');
+      if (error) { setEntryError('Could not save. Please try again.'); setEntrySaving(false); return; }
+      // Refresh availability grid if the date falls in the displayed week
+      if (data) {
+        const ws = admDateStr(availWeekStart);
+        const we = admDateStr(new Date(availWeekStart.getTime() + 5 * 86400000));
+        const inWeek = data.filter(d => d.booking_date >= ws && d.booking_date <= we);
+        if (inWeek.length) setAvailData(prev => [...prev, ...inWeek]);
+      }
+
+    } else {
+      // Real Appointment — all fields optional
       const { data, error } = await supabase
         .from('bookings')
         .insert({
-          name:         '_BLOCKED_',
-          phone:        '',
-          vehicle:      '',
-          service_type: 'blocked',
-          booking_date: dateStr,
-          time_slot:    slotId,
-          status:       'blocked',
+          name:         entryForm.name.trim(),
+          phone:        entryForm.phone.trim(),
+          vehicle:      entryForm.vehicle.trim(),
+          service_type: entryForm.service_type,
+          booking_date: entryForm.date,
+          time_slot:    entryForm.time_slot,
+          status:       entryForm.appointmentStatus,
+          notes:        entryForm.notes.trim(),
         })
-        .select('id, booking_date, time_slot, status, name')
+        .select('*')
         .single();
-      if (!error && data) setAvailData(prev => [...prev, data]);
+      if (error) { setEntryError('Could not save. Please try again.'); setEntrySaving(false); return; }
+      if (data) {
+        // Add to appointments table if it matches the current filter
+        if (bookingsFilter === 'all' || data.booking_date >= todayStr()) {
+          setBookings(prev =>
+            [...prev, data].sort((a, b) => {
+              const d = a.booking_date.localeCompare(b.booking_date);
+              return d !== 0 ? d : a.time_slot.localeCompare(b.time_slot);
+            })
+          );
+        }
+        // Refresh availability grid if in displayed week
+        const ws = admDateStr(availWeekStart);
+        const we = admDateStr(new Date(availWeekStart.getTime() + 5 * 86400000));
+        if (data.booking_date >= ws && data.booking_date <= we) {
+          setAvailData(prev => [
+            ...prev,
+            { id: data.id, booking_date: data.booking_date, time_slot: data.time_slot,
+              status: data.status, name: data.name },
+          ]);
+        }
+      }
     }
-    // If it's a real customer booking → do nothing (can't block over it)
-    setSlotToggling(null);
+
+    setEntrySaving(false);
+    setEntryModal(false);
   };
 
   // Load reviews
   useEffect(() => {
     async function loadReviews() {
       setReviewsLoading(true);
-      let query = supabase
-        .from('reviews')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (reviewsFilter !== 'all') {
-        query = query.eq('status', reviewsFilter);
-      }
+      let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
+      if (reviewsFilter !== 'all') query = query.eq('status', reviewsFilter);
       const { data } = await query;
       setReviews(data ?? []);
       setReviewsLoading(false);
@@ -226,12 +366,8 @@ const Admin = () => {
 
   const updateReviewStatus = async (id, status) => {
     setReviewUpdating(id);
-    const { error } = await supabase
-      .from('reviews')
-      .update({ status })
-      .eq('id', id);
+    const { error } = await supabase.from('reviews').update({ status }).eq('id', id);
     if (!error) {
-      // If the new status no longer matches the active filter, drop it from the list
       if (reviewsFilter !== 'all' && reviewsFilter !== status) {
         setReviews(prev => prev.filter(r => r.id !== id));
       } else {
@@ -245,9 +381,7 @@ const Admin = () => {
     if (!window.confirm('Delete this review permanently? This cannot be undone.')) return;
     setReviewUpdating(id);
     const { error } = await supabase.from('reviews').delete().eq('id', id);
-    if (!error) {
-      setReviews(prev => prev.filter(r => r.id !== id));
-    }
+    if (!error) setReviews(prev => prev.filter(r => r.id !== id));
     setReviewUpdating(null);
   };
 
@@ -272,7 +406,7 @@ const Admin = () => {
       if (data.success) {
         setDeployStatus(data.noChange ? 'no-change' : 'success');
       } else {
-        setDeployStatus({ error: data.message || 'Unbekannter Fehler.' });
+        setDeployStatus({ error: data.message || 'Unknown error.' });
       }
     } catch {
       setDeployStatus({ error: 'Admin server unreachable. Please start it via the desktop shortcut.' });
@@ -310,7 +444,6 @@ const Admin = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // App.jsx onAuthStateChange fires → AdminLogin renders automatically
   };
 
   const hasOverrides = Object.keys(stored).length > 0;
@@ -334,7 +467,8 @@ const Admin = () => {
       </header>
 
       <main className="admin-main">
-        {/* BOOKINGS SECTION */}
+
+        {/* ── APPOINTMENTS SECTION ──────────────────────── */}
         <section className="admin-section">
           <div className="admin-bookings-header">
             <div>
@@ -355,6 +489,12 @@ const Admin = () => {
                 onClick={() => setBookingsFilter('all')}
               >
                 All
+              </button>
+              <button
+                className="adm-btn adm-btn-small adm-btn-add-entry"
+                onClick={() => openEntryModal('appointment')}
+              >
+                + Add Entry
               </button>
             </div>
           </div>
@@ -386,11 +526,13 @@ const Admin = () => {
                       <td className="abt-date">{formatDate(b.booking_date)}</td>
                       <td className="abt-time">{b.time_slot}</td>
                       <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
-                      <td>{b.name}</td>
+                      <td>{b.name || <span className="abt-empty">—</span>}</td>
                       <td>
-                        <a href={`tel:${b.phone}`} className="abt-phone">{b.phone}</a>
+                        {b.phone
+                          ? <a href={`tel:${b.phone}`} className="abt-phone">{b.phone}</a>
+                          : <span className="abt-empty">—</span>}
                       </td>
-                      <td className="abt-vehicle">{b.vehicle}</td>
+                      <td className="abt-vehicle">{b.vehicle || <span className="abt-empty">—</span>}</td>
                       <td>
                         <span className={`abt-badge abt-badge-${STATUS_LABELS[b.status]?.color ?? 'grey'}`}>
                           {STATUS_LABELS[b.status]?.label ?? b.status}
@@ -400,38 +542,14 @@ const Admin = () => {
                         <div className="abt-actions">
                           {b.status === 'pending' && (
                             <>
-                              <button
-                                className="abt-action-btn confirm"
-                                disabled={statusUpdating === b.id}
-                                onClick={() => updateBookingStatus(b.id, 'confirmed')}
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                className="abt-action-btn cancel"
-                                disabled={statusUpdating === b.id}
-                                onClick={() => updateBookingStatus(b.id, 'cancelled')}
-                              >
-                                Cancel
-                              </button>
+                              <button className="abt-action-btn confirm" disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'confirmed')}>Confirm</button>
+                              <button className="abt-action-btn cancel"  disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'cancelled')}>Cancel</button>
                             </>
                           )}
                           {b.status === 'confirmed' && (
                             <>
-                              <button
-                                className="abt-action-btn complete"
-                                disabled={statusUpdating === b.id}
-                                onClick={() => updateBookingStatus(b.id, 'completed')}
-                              >
-                                Complete
-                              </button>
-                              <button
-                                className="abt-action-btn cancel"
-                                disabled={statusUpdating === b.id}
-                                onClick={() => updateBookingStatus(b.id, 'cancelled')}
-                              >
-                                Cancel
-                              </button>
+                              <button className="abt-action-btn complete" disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'completed')}>Complete</button>
+                              <button className="abt-action-btn cancel"   disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'cancelled')}>Cancel</button>
                             </>
                           )}
                           {(b.status === 'completed' || b.status === 'cancelled') && (
@@ -447,15 +565,15 @@ const Admin = () => {
           )}
         </section>
 
-        {/* AVAILABILITY SECTION */}
+        {/* ── MANAGE AVAILABILITY SECTION ───────────────── */}
         <section className="admin-section">
           <div className="admin-bookings-header">
             <div>
               <h2 className="admin-section-title">Manage Availability</h2>
               <p className="admin-section-sub" style={{ marginBottom: 0 }}>
-                <span className="adm-legend-item free">Available</span> — click to block &nbsp;·&nbsp;
+                <span className="adm-legend-item free">Free</span> — click to block or create appointment &nbsp;·&nbsp;
                 <span className="adm-legend-item blocked">Blocked</span> — click to unblock &nbsp;·&nbsp;
-                <span className="adm-legend-item booked">Booked</span> — customer booking, read-only
+                <span className="adm-legend-item booked">Booked</span> — read-only
               </p>
             </div>
             <div className="admin-bookings-filter" style={{ alignItems: 'center', gap: '0.5rem' }}>
@@ -463,20 +581,16 @@ const Admin = () => {
                 className="adm-btn adm-btn-small adm-btn-ghost"
                 onClick={prevAvailWeek}
                 disabled={!canGoPrevAvailWeek}
-              >
-                ←
-              </button>
+              >←</button>
               <span className="adm-avail-week-label">
                 {(() => {
                   const dates = admWeekDates(availWeekStart);
-                  return `${dates[0].getDate()}. ${ADM_MONTH_SHORT[dates[0].getMonth()]} – ${dates[5].getDate()}. ${ADM_MONTH_SHORT[dates[5].getMonth()]} ${dates[5].getFullYear()}`;
+                  return `${dates[0].getDate()} ${ADM_MONTH_SHORT[dates[0].getMonth()]} – ${dates[5].getDate()} ${ADM_MONTH_SHORT[dates[5].getMonth()]} ${dates[5].getFullYear()}`;
                 })()}
               </span>
-              <button
-                className="adm-btn adm-btn-small adm-btn-ghost"
-                onClick={nextAvailWeek}
-              >
-                →
+              <button className="adm-btn adm-btn-small adm-btn-ghost" onClick={nextAvailWeek}>→</button>
+              <button className="adm-btn adm-btn-small adm-btn-add-entry" onClick={() => openEntryModal('block')}>
+                + Block Time
               </button>
             </div>
           </div>
@@ -486,15 +600,27 @@ const Admin = () => {
           ) : (
             <div className="adm-avail-grid">
               {admWeekDates(availWeekStart).map((date, i) => {
-                const dateStr  = admDateStr(date);
-                const isPastDay = date < new Date(new Date().setHours(0, 0, 0, 0));
+                const dateStr    = admDateStr(date);
+                const isPastDay  = date < new Date(new Date().setHours(0, 0, 0, 0));
+                const isBlocking = dayBlocking === dateStr;
+
                 return (
                   <div key={dateStr} className={`adm-avail-col${isPastDay ? ' past' : ''}`}>
                     <div className="adm-avail-col-hdr">
                       <span className="adm-avail-col-day">{ADM_DAY_NAMES[i]}</span>
                       <span className="adm-avail-col-date">
-                        {date.getDate()}. {ADM_MONTH_SHORT[date.getMonth()]}
+                        {date.getDate()} {ADM_MONTH_SHORT[date.getMonth()]}
                       </span>
+                      {!isPastDay && (
+                        <button
+                          className="adm-block-day-btn"
+                          onClick={() => blockDay(dateStr)}
+                          disabled={isBlocking}
+                          title="Block all free slots on this day"
+                        >
+                          {isBlocking ? '…' : 'Block Day'}
+                        </button>
+                      )}
                     </div>
 
                     {ADM_TIME_SLOTS.map(slot => {
@@ -505,6 +631,11 @@ const Admin = () => {
                       const isBooked   = booking && !isBlocked;
                       const toggleKey  = `${dateStr}|${slot.id}`;
                       const isToggling = slotToggling === toggleKey;
+
+                      // Extract optional reason from blocked slot name
+                      const blockReason = isBlocked && booking?.name?.startsWith('_BLOCKED_: ')
+                        ? booking.name.slice('_BLOCKED_: '.length)
+                        : null;
 
                       if (isBooked) {
                         return (
@@ -525,11 +656,15 @@ const Admin = () => {
                           className={`adm-slot${isBlocked ? ' blocked' : ' free'}${isPastDay ? ' past' : ''}`}
                           onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
                           disabled={isPastDay || isToggling}
-                          title={isBlocked ? 'Click to unblock' : 'Click to block'}
+                          title={isBlocked
+                            ? (blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock')
+                            : 'Click to block this slot or create an appointment'}
                         >
                           <span className="adm-slot-time">{slot.label}</span>
                           <span className="adm-slot-sub">
-                            {isToggling ? '…' : isBlocked ? 'Blocked ✕' : 'Available'}
+                            {isToggling ? '…' : isBlocked
+                              ? (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')
+                              : 'Free'}
                           </span>
                         </button>
                       );
@@ -541,7 +676,7 @@ const Admin = () => {
           )}
         </section>
 
-        {/* REVIEWS SECTION */}
+        {/* ── CUSTOMER REVIEWS SECTION ──────────────────── */}
         <section className="admin-section">
           <div className="admin-bookings-header">
             <div>
@@ -590,9 +725,7 @@ const Admin = () => {
                       {r.status}
                     </span>
                   </header>
-
                   <p className="adm-review-comment">{r.comment}</p>
-
                   <div className="adm-review-meta">
                     <strong>{r.customer_name}</strong>
                     {r.vehicle && <span> · {r.vehicle}</span>}
@@ -603,42 +736,17 @@ const Admin = () => {
                       {new Date(r.created_at).toLocaleDateString('en-CA')}
                     </span>
                   </div>
-
                   <div className="adm-review-actions">
                     {r.status !== 'approved' && (
-                      <button
-                        className="abt-action-btn confirm"
-                        disabled={reviewUpdating === r.id}
-                        onClick={() => updateReviewStatus(r.id, 'approved')}
-                      >
-                        Approve
-                      </button>
+                      <button className="abt-action-btn confirm" disabled={reviewUpdating === r.id} onClick={() => updateReviewStatus(r.id, 'approved')}>Approve</button>
                     )}
                     {r.status !== 'hidden' && (
-                      <button
-                        className="abt-action-btn cancel"
-                        disabled={reviewUpdating === r.id}
-                        onClick={() => updateReviewStatus(r.id, 'hidden')}
-                      >
-                        Hide
-                      </button>
+                      <button className="abt-action-btn cancel" disabled={reviewUpdating === r.id} onClick={() => updateReviewStatus(r.id, 'hidden')}>Hide</button>
                     )}
                     {r.status === 'hidden' && (
-                      <button
-                        className="abt-action-btn complete"
-                        disabled={reviewUpdating === r.id}
-                        onClick={() => updateReviewStatus(r.id, 'pending')}
-                      >
-                        Mark Pending
-                      </button>
+                      <button className="abt-action-btn complete" disabled={reviewUpdating === r.id} onClick={() => updateReviewStatus(r.id, 'pending')}>Mark Pending</button>
                     )}
-                    <button
-                      className="abt-action-btn cancel adm-review-delete"
-                      disabled={reviewUpdating === r.id}
-                      onClick={() => deleteReview(r.id)}
-                    >
-                      Delete
-                    </button>
+                    <button className="abt-action-btn cancel adm-review-delete" disabled={reviewUpdating === r.id} onClick={() => deleteReview(r.id)}>Delete</button>
                   </div>
                 </article>
               ))}
@@ -646,7 +754,7 @@ const Admin = () => {
           )}
         </section>
 
-        {/* STATUS BAR */}
+        {/* ── STATUS BAR ────────────────────────────────── */}
         <div className={`admin-status-bar${hasOverrides ? ' has-overrides' : ''}`}>
           {hasOverrides ? (
             <>
@@ -662,13 +770,12 @@ const Admin = () => {
           )}
         </div>
 
-        {/* FEATURE TOGGLES */}
+        {/* ── FEATURE TOGGLES ───────────────────────────── */}
         <section className="admin-section">
           <h2 className="admin-section-title">Feature Toggles</h2>
           <p className="admin-section-sub">
             Changes are instant in your browser. Click <strong>Save to browser</strong> to persist across page reloads.
           </p>
-
           <div className="admin-toggle-list">
             {FEATURE_DEFS.map(f => (
               <div className="admin-toggle-row" key={f.key}>
@@ -693,7 +800,6 @@ const Admin = () => {
               </div>
             ))}
           </div>
-
           <div className="admin-toggle-actions">
             <button className="adm-btn adm-btn-primary" onClick={handleSave}>
               {saved ? '✓ Saved to browser' : 'Save to browser'}
@@ -706,23 +812,19 @@ const Admin = () => {
           </div>
         </section>
 
-        {/* DEPLOY SECTION */}
+        {/* ── DEPLOY SECTION ────────────────────────────── */}
         <section className="admin-section">
           <h2 className="admin-section-title">Deploy to Production</h2>
           <p className="admin-section-sub">
             One click writes <code>features.js</code>, commits and pushes to GitHub.
             Vercel deploys automatically — all visitors see the change in ~60 seconds.
           </p>
-
-          {/* Server status indicator */}
           <div className={`admin-server-status${serverOnline === false ? ' offline' : serverOnline ? ' online' : ''}`}>
             <span className="admin-server-dot" />
             {serverOnline === true  && 'Admin server running — ready to deploy.'}
             {serverOnline === false && 'Admin server offline. Start it via the desktop shortcut.'}
             {serverOnline === null  && 'Checking connection…'}
           </div>
-
-          {/* One-click deploy button */}
           <div className="admin-deploy-cta">
             <button
               className={`adm-btn adm-btn-deploy${deployStatus === 'deploying' ? ' is-deploying' : ''}`}
@@ -731,8 +833,6 @@ const Admin = () => {
             >
               {deployStatus === 'deploying' ? '⏳  Deploying…' : '🚀  Deploy Now'}
             </button>
-
-            {/* Status feedback */}
             {deployStatus === 'success' && (
               <div className="admin-deploy-status is-success">
                 ✓ Deployed! Vercel is rebuilding — live for all visitors in ~60 seconds.
@@ -744,13 +844,9 @@ const Admin = () => {
               </div>
             )}
             {deployStatus && typeof deployStatus === 'object' && deployStatus.error && (
-              <div className="admin-deploy-status is-error">
-                ✗ {deployStatus.error}
-              </div>
+              <div className="admin-deploy-status is-error">✗ {deployStatus.error}</div>
             )}
           </div>
-
-          {/* Manual fallback (collapsed) */}
           <details className="admin-manual-fallback">
             <summary>Deploy Manually (Fallback)</summary>
             <div className="admin-manual-fallback-body">
@@ -768,17 +864,232 @@ const Admin = () => {
           </details>
         </section>
 
-        {/* QUICK PREVIEW */}
+        {/* ── QUICK PREVIEW ─────────────────────────────── */}
         <section className="admin-section admin-section-last">
           <h2 className="admin-section-title">Preview</h2>
-          <p className="admin-section-sub">
-            Visit the site to see your browser overrides live.
-          </p>
+          <p className="admin-section-sub">Visit the site to see your browser overrides live.</p>
           <a href="/" className="adm-btn adm-btn-primary" target="_blank" rel="noreferrer">
             Open site in new tab →
           </a>
         </section>
+
       </main>
+
+      {/* ══════════════════════════════════════════════
+          ADD ENTRY MODAL
+          ══════════════════════════════════════════════ */}
+      {entryModal && (
+        <div className="adm-modal-overlay" onClick={closeEntryModal}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Add Entry</h3>
+              <button className="adm-modal-close" onClick={closeEntryModal} aria-label="Close">✕</button>
+            </div>
+
+            {/* Mode tabs */}
+            <div className="adm-modal-tabs">
+              <button
+                className={`adm-modal-tab${entryMode === 'block' ? ' active' : ''}`}
+                onClick={() => { setEntryMode('block'); setEntryError(''); }}
+              >
+                Block Time
+              </button>
+              <button
+                className={`adm-modal-tab${entryMode === 'appointment' ? ' active' : ''}`}
+                onClick={() => { setEntryMode('appointment'); setEntryError(''); }}
+              >
+                Customer Appointment
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="adm-modal-body">
+              {entryMode === 'block' ? (
+
+                /* ── Block Time form ── */
+                <div className="adm-modal-form">
+                  <p className="adm-modal-mode-desc">
+                    Block one or more time slots so customers can&apos;t book them.
+                    Useful for holidays, personal time, or fleet jobs.
+                  </p>
+
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Date</label>
+                    <input
+                      type="date"
+                      className="adm-form-input"
+                      value={entryForm.date}
+                      min={todayStr()}
+                      autoFocus
+                      onClick={e => e.target.showPicker?.()}
+                      onChange={e => setEntryForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Time Range</label>
+                    <select
+                      className="adm-form-input"
+                      value={entryForm.range}
+                      onChange={e => setEntryForm(f => ({ ...f, range: e.target.value }))}
+                    >
+                      <option value="slot-0">09:00 – 11:00 (Slot 1 only)</option>
+                      <option value="slot-1">11:00 – 13:00 (Slot 2 only)</option>
+                      <option value="slot-2">13:00 – 15:00 (Slot 3 only)</option>
+                      <option value="slot-3">15:00 – 17:00 (Slot 4 only)</option>
+                      <option value="morning">Morning — 09:00 – 13:00 (slots 1 + 2)</option>
+                      <option value="afternoon">Afternoon — 13:00 – 17:00 (slots 3 + 4)</option>
+                      <option value="full">Full Day — all 4 slots</option>
+                    </select>
+                  </div>
+
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">
+                      Reason <span className="adm-form-optional">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="adm-form-input"
+                      placeholder="e.g. Holiday, Fleet job, Personal"
+                      value={entryForm.reason}
+                      onChange={e => setEntryForm(f => ({ ...f, reason: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+              ) : (
+
+                /* ── Real Appointment form ── */
+                <div className="adm-modal-form">
+                  <p className="adm-modal-mode-desc">
+                    Manually create an appointment — e.g. for a phone booking or a job you scheduled yourself.
+                  </p>
+
+                  <div className="adm-form-row-2col">
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Name <span className="adm-form-optional">(optional)</span></label>
+                      <input
+                        type="text"
+                        className="adm-form-input"
+                        placeholder="Customer name"
+                        autoFocus
+                        value={entryForm.name}
+                        onChange={e => setEntryForm(f => ({ ...f, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Phone <span className="adm-form-optional">(optional)</span></label>
+                      <input
+                        type="tel"
+                        className="adm-form-input"
+                        placeholder="+1 …"
+                        value={entryForm.phone}
+                        onChange={e => setEntryForm(f => ({ ...f, phone: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="adm-form-row-2col">
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Date</label>
+                      <input
+                        type="date"
+                        className="adm-form-input"
+                        value={entryForm.date}
+                        min={todayStr()}
+                        onChange={e => setEntryForm(f => ({ ...f, date: e.target.value }))}
+                      />
+                    </div>
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Time Slot</label>
+                      <select
+                        className="adm-form-input"
+                        value={entryForm.time_slot}
+                        onChange={e => setEntryForm(f => ({ ...f, time_slot: e.target.value }))}
+                      >
+                        {ADM_TIME_SLOTS.map(s => (
+                          <option key={s.id} value={s.id}>{s.id}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="adm-form-row-2col">
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Service</label>
+                      <select
+                        className="adm-form-input"
+                        value={entryForm.service_type}
+                        onChange={e => setEntryForm(f => ({ ...f, service_type: e.target.value }))}
+                      >
+                        {Object.entries(SERVICE_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="adm-form-row">
+                      <label className="adm-form-label">Status</label>
+                      <select
+                        className="adm-form-input"
+                        value={entryForm.appointmentStatus}
+                        onChange={e => setEntryForm(f => ({ ...f, appointmentStatus: e.target.value }))}
+                      >
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">
+                      Vehicle <span className="adm-form-optional">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="adm-form-input"
+                      placeholder="e.g. 2019 Toyota Camry"
+                      value={entryForm.vehicle}
+                      onChange={e => setEntryForm(f => ({ ...f, vehicle: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">
+                      Notes <span className="adm-form-optional">(optional)</span>
+                    </label>
+                    <textarea
+                      className="adm-form-input adm-form-textarea"
+                      rows={3}
+                      placeholder="Any additional notes…"
+                      value={entryForm.notes}
+                      onChange={e => setEntryForm(f => ({ ...f, notes: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {entryError && <div className="adm-modal-error">{entryError}</div>}
+            </div>
+
+            {/* Footer */}
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={closeEntryModal} disabled={entrySaving}>
+                Cancel
+              </button>
+              <button className="adm-btn adm-btn-primary" onClick={handleEntrySave} disabled={entrySaving}>
+                {entrySaving
+                  ? 'Saving…'
+                  : entryMode === 'block'
+                    ? 'Block Slot(s)'
+                    : 'Save Appointment'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -41,7 +41,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Email service not configured.' });
   }
 
-  const toAddress = process.env.NOTIFY_EMAIL || 'mobile.automotive@hotmail.com';
+  // Resolve recipient — normalize (lowercase + trim) since Resend free tier
+  // requires an EXACT match against the email registered with the Resend account.
+  // Also defend against accidentally pasting an API key here: must contain "@".
+  const FALLBACK_TO = 'mobile.automotive@hotmail.com';
+  const rawNotify   = (process.env.NOTIFY_EMAIL || '').trim().toLowerCase();
+  const toAddress   = rawNotify.includes('@') ? rawNotify : FALLBACK_TO;
+  if (process.env.NOTIFY_EMAIL && !rawNotify.includes('@')) {
+    console.warn('[send-email] NOTIFY_EMAIL does not look like an email address — falling back to', FALLBACK_TO);
+  }
 
   // ── Build subject ──
   const safeName    = (name    && name.trim())    || '(no name)';
@@ -143,8 +151,15 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[send-email] Resend API error:', response.status, errText);
-      return res.status(500).json({ error: 'Email delivery failed.' });
+      // Print on multiple lines so Vercel's log viewer doesn't truncate
+      console.error('[send-email] Resend API error — status:', response.status);
+      console.error('[send-email] Resend API error — to:', toAddress);
+      console.error('[send-email] Resend API error — body:', errText);
+      return res.status(500).json({
+        error:        'Email delivery failed.',
+        resendStatus: response.status,
+        resendBody:   errText,
+      });
     }
 
     console.log(`[send-email] ${type} email sent to ${toAddress}`);

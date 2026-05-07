@@ -194,7 +194,7 @@ const Admin = () => {
       const endStr   = admDateStr(endDate);
       const { data } = await supabase
         .from('bookings')
-        .select('id, booking_date, time_slot, status, name')
+        .select('id, booking_date, time_slot, status, name, vehicle, service_type')
         .gte('booking_date', startStr)
         .lte('booking_date', endStr)
         .neq('status', 'cancelled');
@@ -236,7 +236,7 @@ const Admin = () => {
       }));
       const { data, error } = await supabase
         .from('bookings').insert(inserts)
-        .select('id, booking_date, time_slot, status, name');
+        .select('id, booking_date, time_slot, status, name, vehicle, service_type');
       if (!error && data) setAvailData(prev => [...prev, ...data]);
     }
     setDayBlocking(null);
@@ -341,7 +341,8 @@ const Admin = () => {
           setAvailData(prev => [
             ...prev,
             { id: data.id, booking_date: data.booking_date, time_slot: data.time_slot,
-              status: data.status, name: data.name },
+              status: data.status, name: data.name,
+              vehicle: data.vehicle, service_type: data.service_type },
           ]);
         }
       }
@@ -642,10 +643,39 @@ const Admin = () => {
                           <div
                             key={slot.id}
                             className={`adm-slot booked s-${booking.status}`}
-                            title={`${booking.name} — ${booking.status}`}
                           >
                             <span className="adm-slot-time">{slot.label}</span>
-                            <span className="adm-slot-name">{booking.name}</span>
+                            <span className="adm-slot-name">{booking.name || '—'}</span>
+                            {booking.vehicle && (
+                              <span className="adm-slot-vehicle">{booking.vehicle}</span>
+                            )}
+                            {/* Hover tooltip */}
+                            <div className="adm-slot-tooltip">
+                              {booking.name && (
+                                <div className="adm-slot-tooltip-row">
+                                  <span className="adm-slot-tooltip-lbl">Name</span>
+                                  <span>{booking.name}</span>
+                                </div>
+                              )}
+                              {booking.vehicle && (
+                                <div className="adm-slot-tooltip-row">
+                                  <span className="adm-slot-tooltip-lbl">Vehicle</span>
+                                  <span className="adm-slot-tooltip-vehicle">{booking.vehicle}</span>
+                                </div>
+                              )}
+                              {booking.service_type && (
+                                <div className="adm-slot-tooltip-row">
+                                  <span className="adm-slot-tooltip-lbl">Service</span>
+                                  <span>{SERVICE_LABELS[booking.service_type] ?? booking.service_type}</span>
+                                </div>
+                              )}
+                              <div className="adm-slot-tooltip-row">
+                                <span className="adm-slot-tooltip-lbl">Status</span>
+                                <span className={`adm-tooltip-status s-${booking.status}`}>
+                                  {STATUS_LABELS[booking.status]?.label ?? booking.status}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         );
                       }

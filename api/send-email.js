@@ -13,6 +13,10 @@
  * Env:
  *   RESEND_API_KEY  — required
  *   NOTIFY_EMAIL    — optional, defaults to mobile-auto-repair@outlook.com
+ *
+ * Extra body fields for booking emails:
+ *   bookingId    : string (UUID from DB — used to build the confirm link)
+ *   confirmToken : string (UUIDv4 generated client-side and stored with the booking)
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -25,12 +29,14 @@ export default async function handler(req, res) {
   }
 
   const {
-    type:    rawType,
-    subject: customSubject,
+    type:         rawType,
+    subject:      customSubject,
     name,
     phone,
     vehicle,
     details,
+    bookingId,
+    confirmToken,
   } = body ?? {};
 
   const type = rawType === 'booking' ? 'booking' : 'quote';
@@ -50,6 +56,13 @@ export default async function handler(req, res) {
   if (process.env.NOTIFY_EMAIL && !rawNotify.includes('@')) {
     console.warn('[send-email] NOTIFY_EMAIL does not look like an email address — falling back to', FALLBACK_TO);
   }
+
+  // ── Build action URLs ──
+  const siteOrigin = `https://${req.headers.host}`;
+  const adminUrl   = `${siteOrigin}/admin`;
+  const confirmUrl = (type === 'booking' && bookingId && confirmToken)
+    ? `${siteOrigin}/api/confirm-booking?id=${encodeURIComponent(bookingId)}&token=${encodeURIComponent(confirmToken)}`
+    : null;
 
   // ── Build subject ──
   const safeName    = (name    && name.trim())    || '(no name)';
@@ -80,9 +93,10 @@ export default async function handler(req, res) {
     '',
     details || '(no details provided)',
     '',
-    type === 'booking'
-      ? 'Open the admin panel to confirm or cancel this booking.'
-      : '',
+    ...(type === 'booking' ? [
+      confirmUrl ? `✅ Confirm booking: ${confirmUrl}` : '',
+      `🔧 Admin panel:   ${adminUrl}`,
+    ] : []),
   ].filter(Boolean).join('\n');
 
   const htmlBody = `
@@ -123,8 +137,23 @@ export default async function handler(req, res) {
         </div>` : ''}
 
         ${type === 'booking' ? `
-        <p style="margin:22px 0 0;font-size:13px;color:#555;line-height:1.55;">
-          👉 Open the <strong>admin panel</strong> to confirm or cancel this booking.
+        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+          ${confirmUrl ? `
+          <a href="${confirmUrl}"
+             style="display:inline-block;background:${accent};color:#fff;text-decoration:none;
+                    padding:12px 22px;border-radius:6px;font-size:14px;font-weight:700;
+                    letter-spacing:.3px;">
+            ✅ Confirm Booking
+          </a>` : ''}
+          <a href="${adminUrl}"
+             style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;
+                    padding:12px 22px;border-radius:6px;font-size:14px;font-weight:600;">
+            🔧 Open Admin Panel
+          </a>
+        </div>
+        <p style="margin:12px 0 0;font-size:12px;color:#999;">
+          Clicking "Confirm Booking" will immediately mark this appointment as confirmed.
+          To cancel or make changes, use the admin panel.
         </p>` : ''}
       </div>
       <div style="padding:14px 24px;background:#f4f4f4;font-size:12px;color:#888;">

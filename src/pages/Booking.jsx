@@ -201,15 +201,20 @@ export default function Booking() {
       return;
     }
 
-    const { error } = await supabase.from('bookings').insert({
-      name:         form.name.trim(),
-      phone:        form.phone.trim(),
-      vehicle:      form.vehicle.trim(),
-      service_type: service,
-      booking_date: dateStr,
-      time_slot:    selSlot,
-      notes:        form.notes.trim(),
-    });
+    // Generate a one-time confirm token stored alongside the booking.
+    // The email will contain a direct "Confirm Booking" link using this token.
+    const confirmToken = crypto.randomUUID();
+
+    const { data: inserted, error } = await supabase.from('bookings').insert({
+      name:          form.name.trim(),
+      phone:         form.phone.trim(),
+      vehicle:       form.vehicle.trim(),
+      service_type:  service,
+      booking_date:  dateStr,
+      time_slot:     selSlot,
+      notes:         form.notes.trim(),
+      confirm_token: confirmToken,
+    }).select('id').single();
 
     if (error) {
       setSubmitError('Booking failed — please try again.');
@@ -224,11 +229,13 @@ export default function Booking() {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type:    'booking',
-        subject: `🗓️ New Appointment Request – ${formatDateLong(selDate)} ${slotLabel}${form.name ? ' – ' + form.name : ''}`,
-        name:    form.name,
-        phone:   form.phone,
-        vehicle: form.vehicle,
+        type:         'booking',
+        subject:      `🗓️ New Appointment Request – ${formatDateLong(selDate)} ${slotLabel}${form.name ? ' – ' + form.name : ''}`,
+        name:         form.name,
+        phone:        form.phone,
+        vehicle:      form.vehicle,
+        bookingId:    inserted?.id,
+        confirmToken: confirmToken,
         details: [
           `Date:    ${formatDateLong(selDate)}`,
           `Time:    ${slotLabel}`,

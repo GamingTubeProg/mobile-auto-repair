@@ -550,7 +550,7 @@ const Home = () => {
             </div>
             <div className="metric">
               <label>Email</label>
-              <a href="mailto:Mobile.Automotive@hotmail.com">Mobile.Automotive@hotmail.com</a>
+              <a href="mailto:mobile-auto-repair@outlook.com">mobile-auto-repair@outlook.com</a>
             </div>
             <div className="metric">
               <label>Base</label>

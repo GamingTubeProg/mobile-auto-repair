@@ -25,7 +25,7 @@ const Footer = () => {
           <div className="footer-contact">
             <h4>Contact Info</h4>
             <p><strong>Phone:</strong> <a href="tel:519-617-7214">519-617-7214</a></p>
-            <p><strong>Email:</strong> <a href="mailto:Mobile.Automotive@hotmail.com">Mobile.Automotive@hotmail.com</a></p>
+            <p><strong>Email:</strong> <a href="mailto:mobile-auto-repair@outlook.com">mobile-auto-repair@outlook.com</a></p>
             <p><strong>Location:</strong> London, Ontario & Surrounding Areas</p>
           </div>
         </div>

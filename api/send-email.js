@@ -12,7 +12,7 @@
  *
  * Env:
  *   RESEND_API_KEY  — required
- *   NOTIFY_EMAIL    — optional, defaults to mobile.automotive@hotmail.com
+ *   NOTIFY_EMAIL    — optional, defaults to mobile-auto-repair@outlook.com
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
   // Resolve recipient — normalize (lowercase + trim) since Resend free tier
   // requires an EXACT match against the email registered with the Resend account.
   // Also defend against accidentally pasting an API key here: must contain "@".
-  const FALLBACK_TO = 'mobile.automotive@hotmail.com';
+  const FALLBACK_TO = 'mobile-auto-repair@outlook.com';
   const rawNotify   = (process.env.NOTIFY_EMAIL || '').trim().toLowerCase();
   const toAddress   = rawNotify.includes('@') ? rawNotify : FALLBACK_TO;
   if (process.env.NOTIFY_EMAIL && !rawNotify.includes('@')) {

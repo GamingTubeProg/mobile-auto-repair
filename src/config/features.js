@@ -29,7 +29,7 @@ const DEFAULTS = {
    * true  → The full 4-step wizard is visible on the page.
    * false → Estimator section and navbar link are hidden.
    */
-  ESTIMATOR_SHOW_PRICE: true,
+  ESTIMATOR_SHOW_PRICE: false,
   ESTIMATOR_ENABLED: true,
 };
 

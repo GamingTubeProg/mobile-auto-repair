@@ -870,145 +870,113 @@
   .hero-actions .btn-arrow { padding: 1rem 1.5rem; font-size: 0.9rem; }
 
   /* ═══════════════════════════════════════════════════════════
-     Service tiles — mobile accordion
-     Default = compact row (~70px). Tap to expand into full card.
-     Only one tile open at a time (controlled by .is-open class
-     from Home.jsx). The desktop hover-reveal effects are
-     suppressed because we manage state explicitly via React.
+     Service tiles — mobile accordion (simplified)
+     Strategy: hide everything in compact mode with `display:none`,
+     override to `display:block` when .is-open is on the tile.
+     No max-height tricks, no position overrides — just on/off.
      ═══════════════════════════════════════════════════════════ */
-  .showroom-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+  .showroom-grid { grid-template-columns: 1fr; gap: 0.6rem; background: transparent; border: none; }
 
   .service-tile {
-    /* Reset desktop flex layout — children stack naturally on mobile */
+    /* Wipe desktop flex+absolute-positioning canvas — children stack. */
     display: block;
     height: auto;
     min-height: 0;
+    overflow: hidden;
     border: 1px solid var(--border-color);
     background-color: var(--bg-card);
-    /* Critical: leave overflow visible so the absolutely-positioned
-       overlay can't accidentally clip content during transitions.
-       (We're hiding the overlay entirely below; no need to clip.) */
-    overflow: hidden;
-    transition: background-color 0.25s ease, border-color 0.25s ease;
+    isolation: auto;
   }
+  /* Defuse every desktop :hover transformation on mobile. */
   .service-tile:hover { background-color: var(--bg-card); }
-  /* Suppress every desktop hover effect — accordion is tap-controlled */
-  .service-tile:hover .tile-img,
-  .service-tile:hover .tile-visor,
-  .service-tile:hover .tile-icon,
-  .service-tile:hover .tile-number,
-  .service-tile:hover::before {
-    transform: none;
-    filter: grayscale(100%) contrast(1.1) opacity(0.35);
-    box-shadow: none;
-  }
+  .service-tile::before { display: none; }
 
-  /* All decorative elements hidden in compact mode AND in expanded mode:
-     the overlay is the dark gradient designed to fade text onto a
-     background image — on mobile the image is a top banner instead,
-     so the overlay is never useful and just covers content. */
-  .tile-overlay { display: none; }
+  /* Compact mode: hide everything except .tile-content (header row). */
+  .service-tile .tile-img,
+  .service-tile .tile-overlay,
+  .service-tile .tile-number,
+  .service-tile .tile-category,
+  .service-tile .tile-visor,
+  .service-tile .tile-desc { display: none; }
 
-  /* Hidden in compact mode — shown again only when .is-open */
-  .tile-img,
-  .tile-number,
-  .tile-category { display: none; }
-
-  /* Compact header row */
-  .tile-content {
-    position: relative;
+  /* Header row layout */
+  .service-tile .tile-content {
+    position: static;
     padding: 0.95rem 1.1rem;
     z-index: auto;
   }
-  .tile-header {
+  .service-tile .tile-header {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.85rem;
     margin: 0;
   }
-  .tile-icon { color: var(--accent-primary); flex-shrink: 0; }
-  .tile-icon svg { width: 22px; height: 22px; }
-  .tile-header h3 {
+  .service-tile .tile-icon { color: var(--accent-primary); flex-shrink: 0; transform: none; }
+  .service-tile .tile-icon svg { width: 22px; height: 22px; }
+  .service-tile .tile-header h3 {
     font-size: 0.95rem;
     letter-spacing: 0.5px;
     line-height: 1.2;
     margin: 0;
-    flex: 1; /* takes remaining horizontal space */
+    flex: 1;
   }
-  .tile-desc { display: none; }
 
-  /* Chevron — inline in the header row, pinned to the right */
-  .tile-chevron {
+  /* Chevron sits at the right end of the flex header */
+  .service-tile .tile-chevron {
     display: inline-block;
     color: var(--accent-primary);
     font-size: 1.05rem;
     line-height: 1;
     flex-shrink: 0;
-    transition: transform 0.3s ease;
-    transform: rotate(0deg);
+    transition: transform 0.25s ease;
   }
 
-  /* Symptoms visor collapsed by default */
-  .tile-visor {
-    position: static;
-    transform: none;
-    overflow: hidden;
-    max-height: 0;
-    padding: 0 1.1rem;
-    border-top: 0 solid var(--accent-primary);
-    transition: max-height 0.4s ease, padding 0.4s ease, border-top-width 0.3s ease;
-  }
-
-  /* ── Expanded state ── */
+  /* ── EXPANDED STATE ── */
   .service-tile.is-open {
-    background-color: var(--bg-dark);
     border-color: var(--accent-primary);
+    background-color: var(--bg-dark);
   }
   .service-tile.is-open .tile-img {
     display: block;
-    position: relative;
-    inset: auto;
+    position: static;
     width: 100%;
     height: 180px;
-    filter: grayscale(0%) contrast(1.05) opacity(0.9);
+    background-size: cover;
+    background-position: center;
+    filter: none;
     transform: none;
-    /* Image sits at the top in normal flow */
-    z-index: 0;
-  }
-  .service-tile.is-open .tile-category {
-    display: inline-block;
-    position: absolute;
-    top: 0.85rem;
-    left: 0.85rem;
-    padding: 0.25rem 0.55rem;
-    font-size: 0.62rem;
-    z-index: 3;
-  }
-  .service-tile.is-open .tile-number {
-    display: block;
-    position: absolute;
-    top: 0.4rem;
-    right: 0.6rem;
-    font-size: 1.8rem;
-    z-index: 3;
-  }
-  .service-tile.is-open .tile-chevron {
-    transform: rotate(180deg);
   }
   .service-tile.is-open .tile-desc {
     display: block;
     font-size: 0.88rem;
-    margin-top: 0.5rem;
+    line-height: 1.5;
     color: var(--text-muted);
+    margin-top: 0.4rem;
   }
   .service-tile.is-open .tile-visor {
-    max-height: 600px;
+    display: block;
+    position: static;
+    transform: none;
+    width: auto;
     padding: 1rem 1.1rem 1.25rem;
-    border-top-width: 1px;
+    margin: 0 1.1rem 1.1rem;
+    border: 1px solid var(--accent-primary);
+    background-color: var(--bg-card);
   }
-  .service-tile.is-open .tile-visor h4 { font-size: 0.72rem; margin-bottom: 0.5rem; }
-  .service-tile.is-open .tile-visor p  { font-size: 0.88rem; line-height: 1.5; }
+  .service-tile.is-open .tile-visor h4 {
+    font-size: 0.72rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-primary);
+  }
+  .service-tile.is-open .tile-visor p {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text-main);
+  }
+  .service-tile.is-open .tile-chevron {
+    transform: rotate(180deg);
+  }
 
   /* Process numbers stay legible but smaller */
   .process-num { font-size: 2.4rem; }

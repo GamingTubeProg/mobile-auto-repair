@@ -78,9 +78,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 18px;
+  /* Tight padding so logos fill the card uniformly; PNGs with internal
+     whitespace would otherwise appear tiny inside a generously-padded box. */
+  padding: 4px 10px;
   box-sizing: border-box;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* ── logo image — fills the card uniformly ── */
@@ -117,6 +120,6 @@
   .brand-marquee__logo-wrap {
     width: 140px;
     height: 68px;
-    padding: 8px 12px;
+    padding: 3px 8px;
   }
 }

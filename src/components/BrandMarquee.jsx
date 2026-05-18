@@ -10,37 +10,42 @@ import './BrandMarquee.css';
 const PX_PER_SECOND = 45;
 
 /* ─────────────────────────────────────────────────────────────
-   Brand logos — londonlube.com colored PNGs, shown on white cards
+   Brand logos — served locally from /public/Logos/ via Vercel CDN.
+   Previously hotlinked from londonlube.com; they removed the
+   images (404s), so we self-host now for reliability.
 ───────────────────────────────────────────────────────────────*/
-const LL = (file) =>
-  `https://www.londonlube.com/wp-content/uploads/${file}`;
+const L = (file) => `/Logos/${file}`;
 
 const BRANDS = [
-  { name: 'Toyota',     src: LL('2016/05/Toyota-logo-1989-2560x1440.png') },
-  { name: 'Honda',      src: LL('2017/04/Honda.png') },
-  { name: 'Ford',       src: LL('2017/04/Ford.png') },
-  { name: 'Chevrolet',  src: LL('2017/04/Chevrolet.png') },
-  { name: 'Dodge',      src: LL('2017/04/Dodge.png') },
-  { name: 'RAM',        src: LL('2017/04/RAM.png') },
-  { name: 'Jeep',       src: LL('2017/04/Jeep.png') },
-  { name: 'Chrysler',   src: LL('2017/04/Chrysler.png') },
-  { name: 'Nissan',     src: LL('2017/04/Nissan.png') },
-  { name: 'Hyundai',    src: LL('2017/04/Hyundai.png') },
-  { name: 'Mazda',      src: LL('2017/04/Mazda.png') },
-  { name: 'Subaru',     src: LL('2016/05/Subaru-logo-2003-2560x1440.png') },
-  { name: 'Volkswagen', src: LL('2016/05/Volkswagen-logo-2015-1920x1080.png') },
-  { name: 'BMW',        src: LL('2017/04/BMW.png') },
-  { name: 'Mercedes',   src: LL('2017/04/Mercedes-Benz.png') },
-  { name: 'Audi',       src: LL('2017/04/Audi.png') },
-  { name: 'Acura',      src: LL('2017/04/Acura.png') },
-  { name: 'Lexus',      src: LL('2017/04/Lexus.png') },
-  { name: 'Infiniti',   src: LL('2017/04/Infiniti.png') },
-  { name: 'Cadillac',   src: LL('2017/04/Cadillac.png') },
-  { name: 'Buick',      src: LL('2017/04/Buick.png') },
-  { name: 'Jaguar',     src: LL('2017/04/Jaguar.png') },
-  { name: 'Land Rover', src: LL('2017/04/Land-Rover.png') },
-  { name: 'Mini',       src: LL('2017/04/Mini.png') },
-  { name: 'Fiat',       src: LL('2017/04/Fiat.png') },
+  { name: 'Toyota',     src: L('Toyota.png') },
+  { name: 'Honda',      src: L('Honda.png') },
+  { name: 'Ford',       src: L('Ford.png') },
+  { name: 'Chevrolet',  src: L('Chevrolet.png') },
+  { name: 'Dodge',      src: L('Dodge.png') },
+  { name: 'RAM',        src: L('RAM.png') },
+  { name: 'Jeep',       src: L('Jeep.png') },
+  { name: 'Chrysler',   src: L('Chrysler.png') },
+  { name: 'Nissan',     src: L('Nissan.png') },
+  { name: 'Hyundai',    src: L('Hyundai.png') },
+  { name: 'Kia',        src: L('Kia.png') },
+  { name: 'Mazda',      src: L('Mazda.png') },
+  { name: 'Subaru',     src: L('Subaru.png') },
+  { name: 'Mitsubishi', src: L('Mitsubishi.png') },
+  { name: 'Volkswagen', src: L('Volkswagen.png') },
+  { name: 'BMW',        src: L('BMW.png') },
+  { name: 'Mercedes',   src: L('Mercedes.png') },
+  { name: 'Audi',       src: L('Audi.png') },
+  { name: 'Acura',      src: L('Acura.png') },
+  { name: 'Lexus',      src: L('Lexus.png') },
+  { name: 'Infiniti',   src: L('Infiniti.png') },
+  { name: 'Genesis',    src: L('Genesis.png') },
+  { name: 'Cadillac',   src: L('Cadillac.png') },
+  { name: 'Buick',      src: L('Buick.png') },
+  { name: 'GMC',        src: L('GMC.png') },
+  { name: 'Jaguar',     src: L('Jaguar.png') },
+  { name: 'Land Rover', src: L('LandRover.png') },
+  { name: 'Mini',       src: L('Mini.png') },
+  { name: 'Fiat',       src: L('Fiat.png') },
 ];
 
 /* ─────────────────────────────────────────────────────────────

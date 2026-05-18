@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Car, Wrench, FileText, Sparkles,
   ChevronLeft, Check, Loader2,
@@ -65,6 +65,23 @@ const INITIAL_FORM = {
 const Estimator = ({ onRequestPreciseQuote }) => {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
+  const rootRef = useRef(null);
+  const isFirstRender = useRef(true);
+
+  // When the user moves between steps, scroll the estimator back to the top
+  // of the viewport so the step indicator + the new step's heading are
+  // immediately visible. Without this, the page keeps the previous scroll
+  // position and the user lands somewhere in the middle of the new step.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!rootRef.current) return;
+    const rect    = rootRef.current.getBoundingClientRect();
+    const targetY = window.scrollY + rect.top - 20; // 20px breathing room above
+    window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
+  }, [step]);
 
   // NHTSA data
   const years = useMemo(() => getYearRange(), []);
@@ -155,7 +172,7 @@ const Estimator = ({ onRequestPreciseQuote }) => {
   };
 
   return (
-    <div className="estimator solid-box">
+    <div className="estimator solid-box" ref={rootRef}>
       {/* HEADER */}
       <div className="est-head">
         <div className="est-head-text">

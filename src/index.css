@@ -33,6 +33,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Mirror body's overflow-x:hidden so some mobile browsers (and elements
+     with position:fixed) can't still trigger horizontal page scroll. */
+  overflow-x: hidden;
 }
 
 body {
@@ -52,6 +55,9 @@ a {
 
 .app {
   min-height: 100vh;
+  /* Belt-and-suspenders: prevents any oversized child from forcing
+     horizontal scroll, even if it escapes body's overflow. */
+  overflow-x: hidden;
 }
 
 /* Utilities */

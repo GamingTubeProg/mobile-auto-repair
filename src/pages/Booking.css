@@ -560,4 +560,16 @@
   }
   .bstep-label { display: none; }
   .bstep-line  { min-width: 14px; }
+
+  /* Stack Back/Next so wide buttons can never overflow the viewport */
+  .booking-nav {
+    flex-direction: column-reverse;
+    gap: 0.65rem;
+    align-items: stretch;
+  }
+  .booking-nav .btn {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    font-size: 0.85rem;
+  }
 }

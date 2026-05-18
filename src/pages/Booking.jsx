@@ -127,6 +127,13 @@ export default function Booking() {
   const [submitError,  setSubmitError] = useState('');
   const [done,         setDone]        = useState(false);
 
+  /* When the booking is successful, scroll to the top so the user sees
+     the "Appointment Booked!" confirmation card and doesn't stay
+     parked on the form submit button mid-page (mobile UX issue). */
+  useEffect(() => {
+    if (done) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [done]);
+
   /* Load taken slots for the next 56 days */
   useEffect(() => {
     async function load() {

@@ -301,6 +301,41 @@ const Home = () => {
   const toggleService = (id) =>
     setOpenServiceId(current => (current === id ? null : id));
 
+  // Track which service tiles the IntersectionObserver has revealed.
+  // Without this, our React re-render on openServiceId change wipes the
+  // imperatively-added `is-visible` class, sending [data-reveal]:not(.is-visible)
+  // back to opacity:0 — making clicked tiles disappear permanently.
+  const [revealedServiceIds, setRevealedServiceIds] = useState(() => new Set());
+  const servicesGridRef = useRef(null);
+  useEffect(() => {
+    const root = servicesGridRef.current;
+    if (!root) return;
+    if (!('IntersectionObserver' in window)) {
+      setRevealedServiceIds(new Set(services.map(s => s.id)));
+      return;
+    }
+    const tiles = root.querySelectorAll('[data-service-id]');
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = Number(entry.target.dataset.serviceId);
+            setRevealedServiceIds(prev => {
+              if (prev.has(id)) return prev;
+              const next = new Set(prev);
+              next.add(id);
+              return next;
+            });
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+    );
+    tiles.forEach(t => io.observe(t));
+    return () => io.disconnect();
+  }, []);
+
   const updateContact = (patch) => setContactForm(f => ({ ...f, ...patch }));
 
   /**
@@ -432,14 +467,16 @@ const Home = () => {
             </p>
           </header>
 
-          <div className="showroom-grid">
+          <div className="showroom-grid" ref={servicesGridRef}>
             {services.map((svc, idx) => {
-              const isOpen = openServiceId === svc.id;
+              const isOpen     = openServiceId === svc.id;
+              const isRevealed = revealedServiceIds.has(svc.id);
               return (
                 <div
-                  className={`service-tile${isOpen ? ' is-open' : ''}`}
+                  className={`service-tile${isRevealed ? ' is-visible' : ''}${isOpen ? ' is-open' : ''}`}
                   key={svc.id}
                   data-reveal
+                  data-service-id={svc.id}
                   style={{ transitionDelay: `${(idx % 3) * 60}ms` }}
                   onClick={() => toggleService(svc.id)}
                 >

@@ -294,6 +294,13 @@ const Home = () => {
   // Show the prefill banner for 2.5s after auto-fill.
   const [justPrefilled, setJustPrefilled] = useState(false);
 
+  // Mobile-only: which service tile is currently expanded (accordion).
+  // On desktop the CSS hover effect is unaffected; on mobile only the
+  // tile with this id reveals its image + symptoms visor.
+  const [openServiceId, setOpenServiceId] = useState(null);
+  const toggleService = (id) =>
+    setOpenServiceId(current => (current === id ? null : id));
+
   const updateContact = (patch) => setContactForm(f => ({ ...f, ...patch }));
 
   /**
@@ -426,28 +433,39 @@ const Home = () => {
           </header>
 
           <div className="showroom-grid">
-            {services.map((svc, idx) => (
-              <div className="service-tile" key={svc.id} data-reveal style={{ transitionDelay: `${(idx % 3) * 60}ms` }}>
-                <div className="tile-img" style={{ backgroundImage: `url(${svc.img})` }}></div>
-                <div className="tile-overlay"></div>
-                <span className="tile-number">{String(svc.id).padStart(2, '0')}</span>
-                <span className="tile-category">{svc.category}</span>
-                <div className="tile-content">
-                  <div className="tile-header">
-                    <span className="tile-icon">{svc.icon}</span>
-                    <h3>{svc.title}</h3>
+            {services.map((svc, idx) => {
+              const isOpen = openServiceId === svc.id;
+              return (
+                <div
+                  className={`service-tile${isOpen ? ' is-open' : ''}`}
+                  key={svc.id}
+                  data-reveal
+                  style={{ transitionDelay: `${(idx % 3) * 60}ms` }}
+                  onClick={() => toggleService(svc.id)}
+                >
+                  <div className="tile-img" style={{ backgroundImage: `url(${svc.img})` }}></div>
+                  <div className="tile-overlay"></div>
+                  <span className="tile-number">{String(svc.id).padStart(2, '0')}</span>
+                  <span className="tile-category">{svc.category}</span>
+                  {/* Mobile-only expand/collapse chevron */}
+                  <span className="tile-chevron" aria-hidden="true">▾</span>
+                  <div className="tile-content">
+                    <div className="tile-header">
+                      <span className="tile-icon">{svc.icon}</span>
+                      <h3>{svc.title}</h3>
+                    </div>
+                    <p className="tile-desc">{svc.desc}</p>
                   </div>
-                  <p className="tile-desc">{svc.desc}</p>
-                </div>
 
-                {svc.symptoms && (
-                  <div className="tile-visor solid-box">
-                    <h4>Symptoms &amp; Triggers</h4>
-                    <p>{svc.symptoms}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+                  {svc.symptoms && (
+                    <div className="tile-visor solid-box">
+                      <h4>Symptoms &amp; Triggers</h4>
+                      <p>{svc.symptoms}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

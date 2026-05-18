@@ -447,12 +447,12 @@ const Home = () => {
                   <div className="tile-overlay"></div>
                   <span className="tile-number">{String(svc.id).padStart(2, '0')}</span>
                   <span className="tile-category">{svc.category}</span>
-                  {/* Mobile-only expand/collapse chevron */}
-                  <span className="tile-chevron" aria-hidden="true">▾</span>
                   <div className="tile-content">
                     <div className="tile-header">
                       <span className="tile-icon">{svc.icon}</span>
                       <h3>{svc.title}</h3>
+                      {/* Mobile-only expand/collapse chevron — hidden on desktop via CSS */}
+                      <span className="tile-chevron" aria-hidden="true">▾</span>
                     </div>
                     <p className="tile-desc">{svc.desc}</p>
                   </div>

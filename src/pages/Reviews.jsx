@@ -9,6 +9,19 @@ const MAX_LONG_EDGE = 1600;   // resize cap (px)
 const JPEG_QUALITY  = 0.82;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB, matches storage bucket limit
 
+// crypto.randomUUID() is not available on older iOS Safari (<15.4) or
+// any non-HTTPS context. Fall back to a manually-built v4-style UUID.
+function randomUuid() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try { return crypto.randomUUID(); } catch { /* ignore, use fallback */ }
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 /**
  * Compress an image client-side: resize so the longer edge is ≤ MAX_LONG_EDGE
  * and re-encode as JPEG. Avoids sending 10 MB phone photos over the wire and
@@ -18,14 +31,14 @@ async function compressImage(file) {
   const dataUrl = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload  = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('Could not read the image file.'));
     reader.readAsDataURL(file);
   });
 
   const img = await new Promise((resolve, reject) => {
     const i = new Image();
     i.onload  = () => resolve(i);
-    i.onerror = reject;
+    i.onerror = () => reject(new Error('Could not decode the image.'));
     i.src = dataUrl;
   });
 
@@ -41,9 +54,13 @@ async function compressImage(file) {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, targetW, targetH);
 
-  const blob = await new Promise(resolve =>
-    canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
-  );
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      b => b ? resolve(b) : reject(new Error('Image compression returned no data.')),
+      'image/jpeg',
+      JPEG_QUALITY
+    );
+  });
   return blob;
 }
 
@@ -90,12 +107,17 @@ export default function Reviews() {
     for (const file of photos) {
       const blob = await compressImage(file);
       // Random key inside a "pending/" folder makes admin moderation easier later.
-      const ext  = 'jpg';
-      const name = `pending/${crypto.randomUUID()}.${ext}`;
+      const name = `pending/${randomUuid()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from('review-photos')
         .upload(name, blob, { contentType: 'image/jpeg', upsert: false });
-      if (upErr) throw upErr;
+      if (upErr) {
+        // Re-throw with the real Supabase error attached so the catch
+        // handler can surface a meaningful message to the user.
+        const e = new Error(upErr.message || 'Upload failed');
+        e.original = upErr;
+        throw e;
+      }
       const { data: pub } = supabase.storage
         .from('review-photos')
         .getPublicUrl(name);
@@ -120,8 +142,9 @@ export default function Reviews() {
       try {
         photoUrls = await uploadPhotos();
       } catch (err) {
-        console.error('[Reviews] Photo upload failed:', err);
-        setError('Could not upload your photos. Please try again or remove them.');
+        console.error('[Reviews] Photo upload failed:', err, err?.original);
+        const detail = err?.message ? ` (${err.message})` : '';
+        setError(`Could not upload your photos${detail}. Please try again or remove them to submit without photos.`);
         setSubmitting(false);
         return;
       }

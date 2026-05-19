@@ -162,13 +162,7 @@ export default function Testimonials() {
           const goTo = (next) => {
             const clamped = Math.max(0, Math.min(totalPages - 1, next));
             setPage(clamped);
-            // Smooth-scroll the grid back into view so the user lands on the
-            // newly-shown reviews instead of staring at the prev/next buttons.
-            if (gridRef.current) {
-              const rect    = gridRef.current.getBoundingClientRect();
-              const targetY = window.scrollY + rect.top - 80;
-              window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
-            }
+            // No auto-scroll on page change — user stays where they are.
           };
 
           return (

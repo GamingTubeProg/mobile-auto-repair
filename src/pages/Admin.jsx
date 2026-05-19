@@ -434,8 +434,8 @@ const Admin = () => {
   // Hard-delete a cancelled booking from the DB so it no longer
   // appears in the table at all. Only offered for status='cancelled'
   // rows — never for pending/confirmed/completed (those keep an audit trail).
+  // No confirm() — admin already had to cancel the appointment first.
   const deleteBookingPermanently = async (id) => {
-    if (!window.confirm('Permanently delete this cancelled booking? This cannot be undone.')) return;
     setStatusUpdating(id);
     const { error } = await supabase.from('bookings').delete().eq('id', id);
     if (!error) {
@@ -866,9 +866,6 @@ const Admin = () => {
                               <button className="abt-action-btn cancel"   disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'cancelled')}>Cancel</button>
                             </>
                           )}
-                          {b.status === 'completed' && (
-                            <span className="abt-no-action">—</span>
-                          )}
                           {b.status === 'cancelled' && (
                             <button
                               className="abt-action-btn cancel"
@@ -879,6 +876,16 @@ const Admin = () => {
                               Delete
                             </button>
                           )}
+                          {/* Edit is available for every status — opens the full
+                              Details/Edit modal where time, name, status, etc.
+                              can all be changed (e.g. cancelled → confirmed). */}
+                          <button
+                            className="abt-action-btn edit"
+                            onClick={() => openBookingDetails(b)}
+                            title="View details · edit · change status"
+                          >
+                            Edit
+                          </button>
                         </div>
                       </td>
                     </tr>

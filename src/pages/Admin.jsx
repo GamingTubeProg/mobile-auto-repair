@@ -217,6 +217,13 @@ const Admin = () => {
   const [dragId,     setDragId]     = useState(null); // id of booking being dragged
   const [dragOverDate, setDragOverDate] = useState(null); // date currently hovered
 
+  // Bumping this triggers both load effects to re-run from Supabase —
+  // gives us an authoritative refresh after any mutation, including
+  // ones we made elsewhere (e.g. customer just booked while admin was
+  // looking at the calendar).
+  const [refreshTick, setRefreshTick] = useState(0);
+  const refreshFromDb = () => setRefreshTick(n => n + 1);
+
   // Drop the dragged booking onto a different date. Same start/end time,
   // just a new booking_date. Optimistic state update first, then DB.
   const handleApptDrop = async (targetDate) => {
@@ -239,6 +246,8 @@ const Admin = () => {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, booking_date: moving.booking_date } : b));
       console.error('[Admin] Failed to move appointment:', error);
       window.alert('Could not move the appointment. Please try again.');
+    } else {
+      refreshFromDb();
     }
   };
 
@@ -315,16 +324,19 @@ const Admin = () => {
     setBookingEditSaving(false);
     setBookingDetails(null);
     setBookingEdit(null);
+    refreshFromDb();
   };
   const cancelBookingFromModal = async () => {
     const b = bookingEdit || bookingDetails;
     if (!b) return;
-    if (!window.confirm('Cancel this appointment? You can delete it permanently from the appointments table afterward.')) return;
+    // Two clicks (open modal → red "Cancel Appointment" button) already
+    // constitute intent — no extra browser confirm() needed.
     setBookingEditSaving(true);
     const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', b.id);
     if (!error) {
       setBookings(prev => prev.map(x => x.id === b.id ? { ...x, status: 'cancelled' } : x));
       setAvailData(prev => prev.filter(x => x.id !== b.id));
+      refreshFromDb();
     }
     setBookingEditSaving(false);
     setBookingDetails(null);
@@ -407,12 +419,15 @@ const Admin = () => {
       setBookingsLoading(false);
     }
     loadBookings();
-  }, [bookingsFilter]);
+  }, [bookingsFilter, refreshTick]);
 
   const updateBookingStatus = async (id, status) => {
     setStatusUpdating(id);
     const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
-    if (!error) setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    if (!error) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+      refreshFromDb(); // re-fetch availData so the calendar card status updates too
+    }
     setStatusUpdating(null);
   };
 
@@ -423,7 +438,10 @@ const Admin = () => {
     if (!window.confirm('Permanently delete this cancelled booking? This cannot be undone.')) return;
     setStatusUpdating(id);
     const { error } = await supabase.from('bookings').delete().eq('id', id);
-    if (!error) setBookings(prev => prev.filter(b => b.id !== id));
+    if (!error) {
+      setBookings(prev => prev.filter(b => b.id !== id));
+      refreshFromDb();
+    }
     setStatusUpdating(null);
   };
 
@@ -444,7 +462,7 @@ const Admin = () => {
       setAvailLoading(false);
     }
     loadAvail();
-  }, [availWeekStart]);
+  }, [availWeekStart, refreshTick]);
 
   // Click slot in calendar:
   //   • free slot       → open Entry modal pre-filled with that date+slot
@@ -456,7 +474,10 @@ const Admin = () => {
       const key = `${dateStr}|${slotId}`;
       setSlotToggling(key);
       const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', existing.id);
-      if (!error) setAvailData(prev => prev.filter(b => b.id !== existing.id));
+      if (!error) {
+        setAvailData(prev => prev.filter(b => b.id !== existing.id));
+        refreshFromDb();
+      }
       setSlotToggling(null);
     } else if (!existing) {
       // Free slot → open the Entry modal pre-filled with this slot
@@ -483,7 +504,10 @@ const Admin = () => {
       const { data, error } = await supabase
         .from('bookings').insert(inserts)
         .select('id, booking_date, time_slot, start_time, end_time, status, name, vehicle, service_type');
-      if (!error && data) setAvailData(prev => [...prev, ...data]);
+      if (!error && data) {
+        setAvailData(prev => [...prev, ...data]);
+        refreshFromDb();
+      }
     }
     setDayBlocking(null);
   };
@@ -634,6 +658,7 @@ const Admin = () => {
 
     setEntrySaving(false);
     setEntryModal(false);
+    refreshFromDb();
   };
 
   // Load reviews

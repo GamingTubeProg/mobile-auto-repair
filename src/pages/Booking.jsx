@@ -144,7 +144,7 @@ export default function Booking() {
       const maxD = new Date(); maxD.setDate(maxD.getDate() + 56);
       const { data } = await supabase
         .from('bookings')
-        .select('booking_date, time_slot, status')
+        .select('booking_date, time_slot, start_time, end_time, status')
         .gte('booking_date', todayStr)
         .lte('booking_date', toDateStr(maxD));
       if (data) setBookedSlots(data);
@@ -171,10 +171,39 @@ export default function Booking() {
     sessionStorage.removeItem('mar_estimate');
   }, []);
 
-  function isSlotTaken(dateStr, slotId) {
-    return bookedSlots.some(
-      b => b.booking_date === dateStr && b.time_slot === slotId && b.status !== 'cancelled'
+  /* Slot status: 'free' | 'limited' | 'taken' | 'blocked'.
+     - blocked: admin explicitly blocked the whole 2.5h window
+     - free:    no admin appointments overlap this window
+     - limited: some overlap, but ≤ 75% of the window — customer can
+                still request; we will confirm by phone
+     - taken:   > 75% of the window already occupied */
+  function getSlotStatus(dateStr, slotId) {
+    const [sStart, sEnd] = slotId.split('-');
+    const slotMin = toMinutes(sEnd) - toMinutes(sStart);
+
+    const overlapping = bookedSlots.filter(b =>
+      b.booking_date === dateStr &&
+      b.status !== 'cancelled' &&
+      b.start_time && b.end_time &&
+      b.start_time < sEnd && b.end_time > sStart
     );
+    if (overlapping.length === 0) return 'free';
+
+    // Any explicit "blocked" row wins
+    if (overlapping.some(b => b.status === 'blocked')) return 'blocked';
+
+    // Sum the overlap minutes of all real appointments
+    const totalOverlap = overlapping.reduce((sum, b) => {
+      const a = b.start_time > sStart ? b.start_time : sStart;
+      const e = b.end_time   < sEnd   ? b.end_time   : sEnd;
+      return sum + Math.max(0, toMinutes(e) - toMinutes(a));
+    }, 0);
+
+    return totalOverlap / slotMin > 0.75 ? 'taken' : 'limited';
+  }
+  function toMinutes(t) {
+    const [h, m] = t.split(':').map(n => parseInt(n, 10));
+    return h * 60 + m;
   }
 
   /* Week navigation ─────────────────────────────────── */
@@ -193,10 +222,13 @@ export default function Booking() {
     setWeekStart(w); setSelDate(null); setSelSlot('');
   }
 
-  /* Available slot count for the displayed week */
+  /* Available slot count = sum of "free" + "limited" across the week */
   const availableCount = weekDates.reduce((acc, d) => {
     if (isPast(d) || isTooFar(d)) return acc;
-    return acc + TIME_SLOTS.filter(s => !isSlotTaken(toDateStr(d), s.id)).length;
+    return acc + TIME_SLOTS.filter(s => {
+      const st = getSlotStatus(toDateStr(d), s.id);
+      return st === 'free' || st === 'limited';
+    }).length;
   }, 0);
 
   /* Submit ────────────────────────────────────────────── */
@@ -205,7 +237,8 @@ export default function Booking() {
     setSubmitError('');
 
     const dateStr = toDateStr(selDate);
-    if (isSlotTaken(dateStr, selSlot)) {
+    const slotStatus = getSlotStatus(dateStr, selSlot);
+    if (slotStatus === 'taken' || slotStatus === 'blocked') {
       setSubmitError('This slot was just taken — please choose another.');
       setSubmitting(false);
       return;
@@ -215,6 +248,10 @@ export default function Booking() {
     // The email will contain a direct "Confirm Booking" link using this token.
     const confirmToken = crypto.randomUUID();
 
+    // Derive precise start_time + end_time from the chosen slot ID
+    // (e.g. "08:00-10:30" → start "08:00", end "10:30").
+    const [slotStart, slotEnd] = selSlot.split('-');
+
     const { data: inserted, error } = await supabase.from('bookings').insert({
       name:          form.name.trim(),
       phone:         form.phone.trim(),
@@ -222,6 +259,8 @@ export default function Booking() {
       service_type:  service,
       booking_date:  dateStr,
       time_slot:     selSlot,
+      start_time:    slotStart,
+      end_time:      slotEnd,
       notes:         form.notes.trim(),
       confirm_token: confirmToken,
     }).select('id').single();
@@ -374,17 +413,26 @@ export default function Booking() {
                     </p>
                     <div className="slot-grid">
                       {TIME_SLOTS.map(slot => {
-                        const taken    = isSlotTaken(toDateStr(selDate), slot.id);
+                        const status   = getSlotStatus(toDateStr(selDate), slot.id);
                         const selected = selSlot === slot.id;
+                        const disabled = status === 'taken' || status === 'blocked';
+                        const subLabel =
+                          status === 'free'    ? slot.sub :
+                          status === 'limited' ? 'Limited' :
+                          status === 'taken'   ? 'Booked'  :
+                          /* blocked */          'Unavailable';
                         return (
                           <button
                             key={slot.id}
-                            className={`slot-btn${taken ? ' taken' : ''}${selected ? ' selected' : ''}`}
-                            onClick={() => !taken && setSelSlot(slot.id)}
-                            disabled={taken}
+                            className={`slot-btn slot-${status}${selected ? ' selected' : ''}`}
+                            onClick={() => !disabled && setSelSlot(slot.id)}
+                            disabled={disabled}
+                            title={status === 'limited'
+                              ? 'Some appointments already in this window — your request will be confirmed by phone.'
+                              : undefined}
                           >
                             <span className="slot-time">{slot.label}</span>
-                            <span className="slot-sub">{taken ? 'Taken' : slot.sub}</span>
+                            <span className="slot-sub">{subLabel}</span>
                           </button>
                         );
                       })}

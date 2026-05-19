@@ -92,10 +92,25 @@ const EMPTY_ENTRY = {
   phone:             '',
   vehicle:           '',
   service_type:      'reparatur',
-  time_slot:         '09:00-11:00',
+  /* Minute-precise time fields used in Appointment mode.
+     Customer-facing time_slot is derived from start_time on save. */
+  start_time:        '09:00',
+  end_time:          '10:00',
   appointmentStatus: 'confirmed',
   notes:             '',
 };
+
+/**
+ * Given a "HH:MM" start time, return the customer-facing 2.5h slot
+ * that contains it (used to derive the time_slot column).
+ */
+function admDeriveSlot(startTime) {
+  for (const s of ADM_TIME_SLOTS) {
+    const [bStart, bEnd] = s.id.split('-');
+    if (startTime >= bStart && startTime < bEnd) return s.id;
+  }
+  return ADM_TIME_SLOTS[ADM_TIME_SLOTS.length - 1].id;
+}
 
 function admDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -191,6 +206,85 @@ const Admin = () => {
   const [reviewEdit,        setReviewEdit]        = useState(null); // the row being edited, or null
   const [reviewEditSaving,  setReviewEditSaving]  = useState(false);
   const [reviewEditError,   setReviewEditError]   = useState('');
+
+  // ── Booking Details / Edit modal state ────────────────────
+  const [bookingDetails,   setBookingDetails]   = useState(null); // the booking shown read-only
+  const [bookingEdit,      setBookingEdit]      = useState(null); // the booking being edited
+  const [bookingEditSaving, setBookingEditSaving] = useState(false);
+  const [bookingEditError,  setBookingEditError]  = useState('');
+
+  const openBookingDetails = (b) => {
+    setBookingDetails(b);
+    setBookingEdit(null);
+  };
+  const closeBookingDetails = () => {
+    setBookingDetails(null);
+    setBookingEdit(null);
+    setBookingEditError('');
+  };
+  const startEditBooking = () => {
+    if (!bookingDetails) return;
+    setBookingEdit({ ...bookingDetails });
+    setBookingEditError('');
+  };
+  const saveBookingEdit = async () => {
+    if (!bookingEdit) return;
+    setBookingEditError('');
+    if (!bookingEdit.start_time || !bookingEdit.end_time) {
+      setBookingEditError('Please enter both a start and end time.');
+      return;
+    }
+    if (bookingEdit.end_time <= bookingEdit.start_time) {
+      setBookingEditError('End time must be after start time.');
+      return;
+    }
+    if (bookingEdit.start_time < '08:00' || bookingEdit.end_time > '18:00') {
+      setBookingEditError('Appointments must be within 8 AM – 6 PM.');
+      return;
+    }
+    setBookingEditSaving(true);
+    const payload = {
+      name:         bookingEdit.name?.trim() || '',
+      phone:        bookingEdit.phone?.trim() || '',
+      vehicle:      bookingEdit.vehicle?.trim() || '',
+      service_type: bookingEdit.service_type || null,
+      booking_date: bookingEdit.booking_date,
+      start_time:   bookingEdit.start_time,
+      end_time:     bookingEdit.end_time,
+      time_slot:    admDeriveSlot(bookingEdit.start_time),
+      status:       bookingEdit.status,
+      notes:        bookingEdit.notes?.trim() || '',
+    };
+    const { data, error } = await supabase
+      .from('bookings').update(payload).eq('id', bookingEdit.id)
+      .select('*').single();
+    if (error) {
+      setBookingEditError('Could not save changes. Please try again.');
+      setBookingEditSaving(false);
+      return;
+    }
+    if (data) {
+      setBookings(prev => prev.map(b => b.id === data.id ? { ...b, ...data } : b));
+      setAvailData(prev => prev.map(b => b.id === data.id ? { ...b, ...data } : b));
+    }
+    setBookingEditSaving(false);
+    setBookingDetails(null);
+    setBookingEdit(null);
+  };
+  const cancelBookingFromModal = async () => {
+    const b = bookingEdit || bookingDetails;
+    if (!b) return;
+    if (!window.confirm('Cancel this appointment? You can delete it permanently from the appointments table afterward.')) return;
+    setBookingEditSaving(true);
+    const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', b.id);
+    if (!error) {
+      setBookings(prev => prev.map(x => x.id === b.id ? { ...x, status: 'cancelled' } : x));
+      setAvailData(prev => prev.filter(x => x.id !== b.id));
+    }
+    setBookingEditSaving(false);
+    setBookingDetails(null);
+    setBookingEdit(null);
+  };
 
   const openReviewEdit = (review) => {
     setReviewEdit({ ...review });
@@ -297,7 +391,7 @@ const Admin = () => {
       const endStr   = admDateStr(endDate);
       const { data } = await supabase
         .from('bookings')
-        .select('id, booking_date, time_slot, status, name, vehicle, service_type')
+        .select('id, booking_date, time_slot, start_time, end_time, status, name, phone, vehicle, service_type, notes')
         .gte('booking_date', startStr)
         .lte('booking_date', endStr)
         .neq('status', 'cancelled');
@@ -332,14 +426,18 @@ const Admin = () => {
       slot => !availData.find(b => b.booking_date === dateStr && b.time_slot === slot.id)
     );
     if (slotsToBlock.length > 0) {
-      const inserts = slotsToBlock.map(slot => ({
-        name: '_BLOCKED_', phone: '', vehicle: '',
-        service_type: 'blocked', booking_date: dateStr,
-        time_slot: slot.id, status: 'blocked',
-      }));
+      const inserts = slotsToBlock.map(slot => {
+        const [sStart, sEnd] = slot.id.split('-');
+        return {
+          name: '_BLOCKED_', phone: '', vehicle: '',
+          service_type: 'blocked', booking_date: dateStr,
+          time_slot: slot.id, start_time: sStart, end_time: sEnd,
+          status: 'blocked',
+        };
+      });
       const { data, error } = await supabase
         .from('bookings').insert(inserts)
-        .select('id, booking_date, time_slot, status, name, vehicle, service_type');
+        .select('id, booking_date, time_slot, start_time, end_time, status, name, vehicle, service_type');
       if (!error && data) setAvailData(prev => [...prev, ...data]);
     }
     setDayBlocking(null);
@@ -351,16 +449,25 @@ const Admin = () => {
   // slotId    : pre-select a single slot — sets range to slot-N and time_slot
   const openEntryModal = (mode = 'block', dateStr = null, slotId = null) => {
     let initialRange = 'full';
+    let initialStart = '09:00';
+    let initialEnd   = '10:00';
     if (slotId) {
       const idx = ADM_TIME_SLOTS.findIndex(s => s.id === slotId);
       if (idx >= 0) initialRange = `slot-${idx}`;
+      const [bStart, bEnd] = slotId.split('-');
+      initialStart = bStart;
+      // Default to a 1-hour appointment starting at the slot's start
+      const [sh, sm] = bStart.split(':').map(n => parseInt(n, 10));
+      const endH     = sh + 1;
+      initialEnd     = `${String(endH).padStart(2, '0')}:${String(sm).padStart(2, '0')}`;
     }
     setEntryMode(mode);
     setEntryForm({
       ...EMPTY_ENTRY,
-      date:      dateStr || todayStr(),
-      range:     initialRange,
-      time_slot: slotId || ADM_TIME_SLOTS[0].id,
+      date:       dateStr || todayStr(),
+      range:      initialRange,
+      start_time: initialStart,
+      end_time:   initialEnd,
     });
     setEntryError('');
     setEntryModal(true);
@@ -378,29 +485,36 @@ const Admin = () => {
     setEntrySaving(true);
 
     if (entryMode === 'block') {
-      // Determine which slot IDs to block
+      // Determine which slot IDs to block (block mode still uses the 4
+      // customer-facing 2.5h windows; this is intentional — blocking is
+      // typically full slots, not arbitrary times).
       const slotIds    = RANGE_TO_SLOTS[entryForm.range] ?? [];
       const freeSlotIds = slotIds.filter(
-        sid => !availData.find(b => b.booking_date === entryForm.date && b.time_slot === sid)
+        sid => !availData.find(b => b.booking_date === entryForm.date && b.time_slot === sid && b.status === 'blocked')
       );
       if (freeSlotIds.length === 0) {
-        setEntryError('All selected slots are already booked or blocked.');
+        setEntryError('All selected slots are already blocked.');
         setEntrySaving(false);
         return;
       }
       const reason  = entryForm.reason.trim();
-      const inserts = freeSlotIds.map(sid => ({
-        name:         reason ? `_BLOCKED_: ${reason}` : '_BLOCKED_',
-        phone:        '',
-        vehicle:      '',
-        service_type: 'blocked',
-        booking_date: entryForm.date,
-        time_slot:    sid,
-        status:       'blocked',
-      }));
+      const inserts = freeSlotIds.map(sid => {
+        const [sStart, sEnd] = sid.split('-');
+        return {
+          name:         reason ? `_BLOCKED_: ${reason}` : '_BLOCKED_',
+          phone:        '',
+          vehicle:      '',
+          service_type: 'blocked',
+          booking_date: entryForm.date,
+          time_slot:    sid,
+          start_time:   sStart,
+          end_time:     sEnd,
+          status:       'blocked',
+        };
+      });
       const { data, error } = await supabase
         .from('bookings').insert(inserts)
-        .select('id, booking_date, time_slot, status, name');
+        .select('id, booking_date, time_slot, start_time, end_time, status, name');
       if (error) { setEntryError('Could not save. Please try again.'); setEntrySaving(false); return; }
       // Refresh availability grid if the date falls in the displayed week
       if (data) {
@@ -411,7 +525,25 @@ const Admin = () => {
       }
 
     } else {
-      // Real Appointment — all fields optional
+      // Real Appointment — minute-precise times via two pickers.
+      // Validation
+      if (!entryForm.start_time || !entryForm.end_time) {
+        setEntryError('Please enter both a start and end time.');
+        setEntrySaving(false);
+        return;
+      }
+      if (entryForm.end_time <= entryForm.start_time) {
+        setEntryError('End time must be after start time.');
+        setEntrySaving(false);
+        return;
+      }
+      if (entryForm.start_time < '08:00' || entryForm.end_time > '18:00') {
+        setEntryError('Appointments must be within working hours (8 AM – 6 PM).');
+        setEntrySaving(false);
+        return;
+      }
+
+      const derivedSlot = admDeriveSlot(entryForm.start_time);
       const { data, error } = await supabase
         .from('bookings')
         .insert({
@@ -420,7 +552,9 @@ const Admin = () => {
           vehicle:      entryForm.vehicle.trim(),
           service_type: entryForm.service_type,
           booking_date: entryForm.date,
-          time_slot:    entryForm.time_slot,
+          time_slot:    derivedSlot,
+          start_time:   entryForm.start_time,
+          end_time:     entryForm.end_time,
           status:       entryForm.appointmentStatus,
           notes:        entryForm.notes.trim(),
         })
@@ -444,8 +578,10 @@ const Admin = () => {
           setAvailData(prev => [
             ...prev,
             { id: data.id, booking_date: data.booking_date, time_slot: data.time_slot,
-              status: data.status, name: data.name,
-              vehicle: data.vehicle, service_type: data.service_type },
+              start_time: data.start_time, end_time: data.end_time,
+              status: data.status, name: data.name, phone: data.phone,
+              vehicle: data.vehicle, service_type: data.service_type,
+              notes: data.notes },
           ]);
         }
       }
@@ -628,7 +764,11 @@ const Admin = () => {
                   {bookings.map(b => (
                     <tr key={b.id} className={`admin-booking-row status-${b.status}`}>
                       <td className="abt-date">{formatDate(b.booking_date)}</td>
-                      <td className="abt-time">{formatSlot(b.time_slot)}</td>
+                      <td className="abt-time">
+                        {b.start_time && b.end_time
+                          ? `${to12h(b.start_time)} – ${to12h(b.end_time)}`
+                          : formatSlot(b.time_slot)}
+                      </td>
                       <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
                       <td>{b.name || <span className="abt-empty">—</span>}</td>
                       <td>
@@ -738,77 +878,85 @@ const Admin = () => {
                     </div>
 
                     {ADM_TIME_SLOTS.map(slot => {
-                      const booking    = availData.find(
-                        b => b.booking_date === dateStr && b.time_slot === slot.id
+                      const [sStart, sEnd] = slot.id.split('-');
+
+                      // All non-cancelled bookings whose start/end overlap this 2.5h window
+                      const inSlot = availData.filter(b =>
+                        b.booking_date === dateStr &&
+                        b.status !== 'cancelled' &&
+                        b.start_time && b.end_time &&
+                        b.start_time < sEnd && b.end_time > sStart
                       );
-                      const isBlocked  = booking?.status === 'blocked';
-                      const isBooked   = booking && !isBlocked;
+
+                      const blockedRow = inSlot.find(b => b.status === 'blocked');
+                      const bookings   = inSlot.filter(b => b.status !== 'blocked')
+                                              .sort((a, b) => a.start_time.localeCompare(b.start_time));
                       const toggleKey  = `${dateStr}|${slot.id}`;
                       const isToggling = slotToggling === toggleKey;
-
-                      // Extract optional reason from blocked slot name
-                      const blockReason = isBlocked && booking?.name?.startsWith('_BLOCKED_: ')
-                        ? booking.name.slice('_BLOCKED_: '.length)
+                      const blockReason = blockedRow?.name?.startsWith('_BLOCKED_: ')
+                        ? blockedRow.name.slice('_BLOCKED_: '.length)
                         : null;
 
-                      if (isBooked) {
+                      // BLOCKED — show as red "blocked" slot, click to unblock
+                      if (blockedRow) {
                         return (
-                          <div
+                          <button
                             key={slot.id}
-                            className={`adm-slot booked s-${booking.status}`}
+                            className={`adm-slot blocked${isPastDay ? ' past' : ''}`}
+                            onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
+                            disabled={isPastDay || isToggling}
+                            title={blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock'}
                           >
                             <span className="adm-slot-time">{slot.label}</span>
-                            <span className="adm-slot-name">{booking.name || '—'}</span>
-                            {booking.vehicle && (
-                              <span className="adm-slot-vehicle">{booking.vehicle}</span>
-                            )}
-                            {/* Hover tooltip */}
-                            <div className="adm-slot-tooltip">
-                              {booking.name && (
-                                <div className="adm-slot-tooltip-row">
-                                  <span className="adm-slot-tooltip-lbl">Name</span>
-                                  <span>{booking.name}</span>
-                                </div>
-                              )}
-                              {booking.vehicle && (
-                                <div className="adm-slot-tooltip-row">
-                                  <span className="adm-slot-tooltip-lbl">Vehicle</span>
-                                  <span className="adm-slot-tooltip-vehicle">{booking.vehicle}</span>
-                                </div>
-                              )}
-                              {booking.service_type && (
-                                <div className="adm-slot-tooltip-row">
-                                  <span className="adm-slot-tooltip-lbl">Service</span>
-                                  <span>{SERVICE_LABELS[booking.service_type] ?? booking.service_type}</span>
-                                </div>
-                              )}
-                              <div className="adm-slot-tooltip-row">
-                                <span className="adm-slot-tooltip-lbl">Status</span>
-                                <span className={`adm-tooltip-status s-${booking.status}`}>
-                                  {STATUS_LABELS[booking.status]?.label ?? booking.status}
+                            <span className="adm-slot-sub">
+                              {isToggling ? '…' : (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')}
+                            </span>
+                          </button>
+                        );
+                      }
+
+                      // HAS APPOINTMENTS — render each as a small clickable card (stacked)
+                      if (bookings.length > 0) {
+                        return (
+                          <div key={slot.id} className="adm-slot-group">
+                            <span className="adm-slot-group-label">{slot.label}</span>
+                            {bookings.map(b => (
+                              <button
+                                key={b.id}
+                                type="button"
+                                className={`adm-appt-card s-${b.status}`}
+                                onClick={() => openBookingDetails(b)}
+                              >
+                                <span className="adm-appt-time">
+                                  {to12h(b.start_time)} – {to12h(b.end_time)}
                                 </span>
-                              </div>
-                            </div>
+                                <span className="adm-appt-name">{b.name || '—'}</span>
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              className="adm-slot-add-inline"
+                              onClick={() => !isPastDay && openEntryModal('appointment', dateStr, slot.id)}
+                              disabled={isPastDay}
+                              title="Add another appointment in this block"
+                            >
+                              + Add
+                            </button>
                           </div>
                         );
                       }
 
+                      // FREE — click to add an appointment (or block) in this slot
                       return (
                         <button
                           key={slot.id}
-                          className={`adm-slot${isBlocked ? ' blocked' : ' free'}${isPastDay ? ' past' : ''}`}
+                          className={`adm-slot free${isPastDay ? ' past' : ''}`}
                           onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
                           disabled={isPastDay || isToggling}
-                          title={isBlocked
-                            ? (blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock')
-                            : 'Click to block this slot or create an appointment'}
+                          title="Click to block this slot or create an appointment"
                         >
                           <span className="adm-slot-time">{slot.label}</span>
-                          <span className="adm-slot-sub">
-                            {isToggling ? '…' : isBlocked
-                              ? (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')
-                              : 'Free'}
-                          </span>
+                          <span className="adm-slot-sub">{isToggling ? '…' : 'Free'}</span>
                         </button>
                       );
                     })}
@@ -1154,28 +1302,41 @@ const Admin = () => {
                     </div>
                   </div>
 
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Date</label>
+                    <input
+                      type="date"
+                      className="adm-form-input"
+                      value={entryForm.date}
+                      min={todayStr()}
+                      onChange={e => setEntryForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+
                   <div className="adm-form-row-2col">
                     <div className="adm-form-row">
-                      <label className="adm-form-label">Date</label>
+                      <label className="adm-form-label">Start Time</label>
                       <input
-                        type="date"
+                        type="time"
                         className="adm-form-input"
-                        value={entryForm.date}
-                        min={todayStr()}
-                        onChange={e => setEntryForm(f => ({ ...f, date: e.target.value }))}
+                        value={entryForm.start_time}
+                        min="08:00"
+                        max="17:45"
+                        step="900"  /* 15-minute increments */
+                        onChange={e => setEntryForm(f => ({ ...f, start_time: e.target.value }))}
                       />
                     </div>
                     <div className="adm-form-row">
-                      <label className="adm-form-label">Time Slot</label>
-                      <select
+                      <label className="adm-form-label">End Time</label>
+                      <input
+                        type="time"
                         className="adm-form-input"
-                        value={entryForm.time_slot}
-                        onChange={e => setEntryForm(f => ({ ...f, time_slot: e.target.value }))}
-                      >
-                        {ADM_TIME_SLOTS.map(s => (
-                          <option key={s.id} value={s.id}>{s.label}</option>
-                        ))}
-                      </select>
+                        value={entryForm.end_time}
+                        min="08:15"
+                        max="18:00"
+                        step="900"
+                        onChange={e => setEntryForm(f => ({ ...f, end_time: e.target.value }))}
+                      />
                     </div>
                   </div>
 
@@ -1359,6 +1520,210 @@ const Admin = () => {
               <button className="adm-btn adm-btn-primary" onClick={saveReviewEdit} disabled={reviewEditSaving}>
                 {reviewEditSaving ? 'Saving…' : 'Save Changes'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          BOOKING DETAILS / EDIT MODAL
+          Two-stage: first read-only details, then "Edit" reveals
+          editable fields with Save / Cancel buttons.
+          ══════════════════════════════════════════════ */}
+      {bookingDetails && !bookingEdit && (
+        <div className="adm-modal-overlay" onClick={closeBookingDetails}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Appointment Details</h3>
+              <button className="adm-modal-close" onClick={closeBookingDetails} aria-label="Close">✕</button>
+            </div>
+            <div className="adm-modal-body">
+              <div className="adm-details-grid">
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Date</span>
+                  <span>{formatDate(bookingDetails.booking_date)}</span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Time</span>
+                  <span>{to12h(bookingDetails.start_time)} – {to12h(bookingDetails.end_time)}</span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Status</span>
+                  <span className={`abt-badge abt-badge-${STATUS_LABELS[bookingDetails.status]?.color ?? 'grey'}`}>
+                    {STATUS_LABELS[bookingDetails.status]?.label ?? bookingDetails.status}
+                  </span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Service</span>
+                  <span>{SERVICE_LABELS[bookingDetails.service_type] ?? bookingDetails.service_type ?? '—'}</span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Name</span>
+                  <span>{bookingDetails.name || '—'}</span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Phone</span>
+                  <span>
+                    {bookingDetails.phone
+                      ? <a href={`tel:${bookingDetails.phone}`}>{bookingDetails.phone}</a>
+                      : '—'}
+                  </span>
+                </div>
+                <div className="adm-details-row">
+                  <span className="adm-details-lbl">Vehicle</span>
+                  <span>{bookingDetails.vehicle || '—'}</span>
+                </div>
+                {bookingDetails.notes && (
+                  <div className="adm-details-row adm-details-row-notes">
+                    <span className="adm-details-lbl">Notes</span>
+                    <span style={{ whiteSpace: 'pre-wrap' }}>{bookingDetails.notes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={closeBookingDetails}>Close</button>
+              <button className="adm-btn adm-btn-primary" onClick={startEditBooking}>
+                Edit · Reschedule · Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit stage — same modal shell, editable fields */}
+      {bookingEdit && (
+        <div className="adm-modal-overlay" onClick={() => !bookingEditSaving && closeBookingDetails()}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Edit Appointment</h3>
+              <button className="adm-modal-close" onClick={closeBookingDetails} aria-label="Close" disabled={bookingEditSaving}>✕</button>
+            </div>
+            <div className="adm-modal-body">
+              <div className="adm-modal-form">
+
+                <div className="adm-form-row-2col">
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Name</label>
+                    <input
+                      type="text"
+                      className="adm-form-input"
+                      value={bookingEdit.name || ''}
+                      onChange={e => setBookingEdit(r => ({ ...r, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Phone</label>
+                    <input
+                      type="tel"
+                      className="adm-form-input"
+                      value={bookingEdit.phone || ''}
+                      onChange={e => setBookingEdit(r => ({ ...r, phone: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="adm-form-row">
+                  <label className="adm-form-label">Date</label>
+                  <input
+                    type="date"
+                    className="adm-form-input"
+                    value={bookingEdit.booking_date}
+                    onChange={e => setBookingEdit(r => ({ ...r, booking_date: e.target.value }))}
+                  />
+                </div>
+
+                <div className="adm-form-row-2col">
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Start Time</label>
+                    <input
+                      type="time"
+                      className="adm-form-input"
+                      value={bookingEdit.start_time || ''}
+                      min="08:00" max="17:45" step="900"
+                      onChange={e => setBookingEdit(r => ({ ...r, start_time: e.target.value }))}
+                    />
+                  </div>
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">End Time</label>
+                    <input
+                      type="time"
+                      className="adm-form-input"
+                      value={bookingEdit.end_time || ''}
+                      min="08:15" max="18:00" step="900"
+                      onChange={e => setBookingEdit(r => ({ ...r, end_time: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="adm-form-row-2col">
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Service</label>
+                    <select
+                      className="adm-form-input"
+                      value={bookingEdit.service_type || ''}
+                      onChange={e => setBookingEdit(r => ({ ...r, service_type: e.target.value || null }))}
+                    >
+                      <option value="">— None —</option>
+                      {Object.entries(SERVICE_LABELS).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Status</label>
+                    <select
+                      className="adm-form-input"
+                      value={bookingEdit.status}
+                      onChange={e => setBookingEdit(r => ({ ...r, status: e.target.value }))}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="adm-form-row">
+                  <label className="adm-form-label">Vehicle</label>
+                  <input
+                    type="text"
+                    className="adm-form-input"
+                    value={bookingEdit.vehicle || ''}
+                    onChange={e => setBookingEdit(r => ({ ...r, vehicle: e.target.value }))}
+                  />
+                </div>
+
+                <div className="adm-form-row">
+                  <label className="adm-form-label">Notes</label>
+                  <textarea
+                    className="adm-form-input adm-form-textarea"
+                    rows={3}
+                    value={bookingEdit.notes || ''}
+                    onChange={e => setBookingEdit(r => ({ ...r, notes: e.target.value }))}
+                  />
+                </div>
+
+              </div>
+              {bookingEditError && <div className="adm-modal-error">{bookingEditError}</div>}
+            </div>
+            <div className="adm-modal-footer adm-modal-footer-edit">
+              <button
+                className="adm-btn adm-btn-danger"
+                onClick={cancelBookingFromModal}
+                disabled={bookingEditSaving || bookingEdit.status === 'cancelled'}
+              >
+                Cancel Appointment
+              </button>
+              <div className="adm-modal-footer-right">
+                <button className="adm-btn adm-btn-ghost" onClick={closeBookingDetails} disabled={bookingEditSaving}>
+                  Close
+                </button>
+                <button className="adm-btn adm-btn-primary" onClick={saveBookingEdit} disabled={bookingEditSaving}>
+                  {bookingEditSaving ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

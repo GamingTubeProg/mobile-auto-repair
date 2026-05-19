@@ -29,8 +29,16 @@ const DEFAULTS = {
    * true  → The full 4-step wizard is visible on the page.
    * false → Estimator section and navbar link are hidden.
    */
+  /**
+   * SHOW_REVIEW_PHOTOS
+   * true  → Photos uploaded with customer reviews are displayed in the
+   *         Testimonials section on the homepage as small thumbnails.
+   * false → Photos are still uploaded and stored, but never rendered
+   *         publicly (only the text + name + rating shows).
+   */
   ESTIMATOR_SHOW_PRICE: false,
-  ESTIMATOR_ENABLED: true,
+  ESTIMATOR_ENABLED:    true,
+  SHOW_REVIEW_PHOTOS:   true,
 };
 
 // ── localStorage override (set from /admin panel) ──────────

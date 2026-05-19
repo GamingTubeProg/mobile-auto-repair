@@ -166,10 +166,98 @@
   margin-top: 0.5rem;
 }
 
+/* ── Photo thumbnails inside review cards ── */
+.t-photos {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.85rem 0 0.65rem;
+  flex-wrap: wrap;
+}
+.t-photo-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  padding: 0;
+  background: var(--bg-dark);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+.t-photo-thumb:hover {
+  border-color: var(--accent-primary);
+  transform: scale(1.04);
+}
+.t-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Source badge (e.g. "G" for Google reviews) ── */
+.t-source-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285F4 0%, #34A853 33%, #FBBC05 66%, #EA4335 100%);
+  color: #fff;
+  vertical-align: middle;
+}
+
+/* ── Lightbox overlay ── */
+.t-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 2rem;
+  cursor: zoom-out;
+  animation: t-lightbox-fade 0.18s ease-out;
+}
+@keyframes t-lightbox-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.t-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.8);
+}
+.t-lightbox-close {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  z-index: 10000;
+}
+.t-lightbox-close:hover { background: #ef4444; }
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .t-grid { grid-template-columns: 1fr; }
   .t-summary { gap: 0.5rem; }
   .t-avg { font-size: 1.7rem; }
   .t-count { font-size: 0.8rem; }
+  .t-photo-thumb { width: 56px; height: 56px; }
 }

@@ -23,6 +23,16 @@ const FEATURE_DEFS = [
     defaultVal: true,
     tag: 'Layout',
   },
+  {
+    key: 'SHOW_REVIEW_PHOTOS',
+    label: 'Show Review Photos',
+    description:
+      'When ON, photos uploaded by customers with their review appear as small thumbnails ' +
+      'in the Testimonials section on the homepage. When OFF, photos are still uploaded and ' +
+      'stored — only the public display is hidden.',
+    defaultVal: true,
+    tag: 'Reviews',
+  },
 ];
 
 function loadStored() {
@@ -756,8 +766,27 @@ const Admin = () => {
                     </span>
                   </header>
                   <p className="adm-review-comment">{r.comment}</p>
+
+                  {r.photo_urls?.length > 0 && (
+                    <div className="adm-review-photos">
+                      {r.photo_urls.map((url, i) => (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="adm-review-photo"
+                          title="Open full size in new tab"
+                        >
+                          <img src={url} alt={`Photo ${i + 1}`} loading="lazy" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="adm-review-meta">
                     <strong>{r.customer_name}</strong>
+                    {r.source === 'google' && <span className="adm-source-badge"> · from Google</span>}
                     {r.vehicle && <span> · {r.vehicle}</span>}
                     {r.service_type && SERVICE_LABELS[r.service_type] && (
                       <span> · {SERVICE_LABELS[r.service_type]}</span>

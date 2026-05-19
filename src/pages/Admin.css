@@ -1025,6 +1025,40 @@
   margin: 0;
 }
 
+.adm-review-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.adm-review-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-dark);
+  display: block;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.adm-review-photo:hover {
+  border-color: var(--accent-primary);
+  transform: scale(1.04);
+}
+.adm-review-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.adm-source-badge {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
 .adm-review-meta {
   font-size: 0.78rem;
   color: var(--text-muted);

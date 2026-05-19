@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Star, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import FEATURES from '../config/features';
 import './Testimonials.css';
 
 const SERVICE_LABELS = {
@@ -41,13 +42,14 @@ function formatRelative(dateStr) {
 export default function Testimonials() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
   const sectionRef = useRef(null);
 
   useEffect(() => {
     async function load() {
       const { data, error } = await supabase
         .from('reviews')
-        .select('id, customer_name, rating, comment, vehicle, service_type, created_at')
+        .select('id, customer_name, rating, comment, vehicle, service_type, created_at, photo_urls, source')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(6);
@@ -147,8 +149,30 @@ export default function Testimonials() {
               <Quote className="t-quote-icon" />
               <StarRating value={r.rating} />
               <p className="t-comment">{r.comment}</p>
+
+              {FEATURES.SHOW_REVIEW_PHOTOS && r.photo_urls?.length > 0 && (
+                <div className="t-photos">
+                  {r.photo_urls.map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="t-photo-thumb"
+                      onClick={() => setLightboxUrl(url)}
+                      aria-label={`View photo ${i + 1}`}
+                    >
+                      <img src={url} alt={`Review photo ${i + 1}`} loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="t-meta">
-                <span className="t-name">{r.customer_name}</span>
+                <span className="t-name">
+                  {r.customer_name}
+                  {r.source === 'google' && (
+                    <span className="t-source-badge" title="From Google Reviews">G</span>
+                  )}
+                </span>
                 <span className="t-info">
                   {r.vehicle && <>{r.vehicle} · </>}
                   {r.service_type && SERVICE_LABELS[r.service_type] && (
@@ -168,6 +192,26 @@ export default function Testimonials() {
           </a>
         </div>
       </div>
+
+      {/* Lightbox — fullscreen view of clicked review photo */}
+      {lightboxUrl && (
+        <div
+          className="t-lightbox"
+          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-label="Review photo"
+        >
+          <button
+            type="button"
+            className="t-lightbox-close"
+            onClick={() => setLightboxUrl(null)}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          <img src={lightboxUrl} alt="Review" />
+        </div>
+      )}
     </section>
   );
 }

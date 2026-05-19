@@ -742,6 +742,15 @@
   border-color: #ef4444;
 }
 
+.abt-action-btn.edit {
+  color: var(--accent-secondary);
+  border-color: rgba(243,156,18,0.35);
+}
+.abt-action-btn.edit:hover:not(:disabled) {
+  background: rgba(243,156,18,0.1);
+  border-color: var(--accent-secondary);
+}
+
 .abt-no-action {
   color: var(--text-muted);
   font-size: 0.85rem;

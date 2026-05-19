@@ -44,6 +44,22 @@ export default function Testimonials() {
   const [loading, setLoading] = useState(true);
   const [lightboxUrl, setLightboxUrl] = useState(null);
   const sectionRef = useRef(null);
+  const gridRef    = useRef(null);
+
+  // Pagination — show 3 reviews per page on desktop, 1 on mobile.
+  const [page,     setPage]     = useState(0);
+  const [pageSize, setPageSize] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 700 ? 1 : 3
+  );
+
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth < 700 ? 1 : 3;
+      setPageSize(prev => prev === next ? prev : next);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -51,8 +67,7 @@ export default function Testimonials() {
         .from('reviews')
         .select('id, customer_name, rating, comment, vehicle, service_type, created_at, photo_urls, source')
         .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(6);
+        .order('created_at', { ascending: false });
       if (error) {
         console.error('[Testimonials] Failed to load reviews:', error);
       }
@@ -133,57 +148,120 @@ export default function Testimonials() {
             <span className="t-avg">{avgRating}</span>
             <StarRating value={Math.round(avgRating)} size={18} />
             <span className="t-count">
-              Based on <strong>{reviews.length}</strong> recent review{reviews.length !== 1 ? 's' : ''}
+              Based on <strong>{reviews.length}</strong> review{reviews.length !== 1 ? 's' : ''}
             </span>
           </div>
         </header>
 
-        <div className="t-grid">
-          {reviews.map((r, i) => (
-            <article
-              key={r.id}
-              className="t-card"
-              data-reveal
-              style={{ transitionDelay: `${(i % 3) * 80}ms` }}
-            >
-              <Quote className="t-quote-icon" />
-              <StarRating value={r.rating} />
-              <p className="t-comment">{r.comment}</p>
+        {(() => {
+          const totalPages   = Math.max(1, Math.ceil(reviews.length / pageSize));
+          const safePage     = Math.min(page, totalPages - 1);
+          const visibleStart = safePage * pageSize;
+          const visible      = reviews.slice(visibleStart, visibleStart + pageSize);
 
-              {FEATURES.SHOW_REVIEW_PHOTOS && r.photo_urls?.length > 0 && (
-                <div className="t-photos">
-                  {r.photo_urls.map((url, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="t-photo-thumb"
-                      onClick={() => setLightboxUrl(url)}
-                      aria-label={`View photo ${i + 1}`}
-                    >
-                      <img src={url} alt={`Review photo ${i + 1}`} loading="lazy" />
-                    </button>
-                  ))}
-                </div>
-              )}
+          const goTo = (next) => {
+            const clamped = Math.max(0, Math.min(totalPages - 1, next));
+            setPage(clamped);
+            // Smooth-scroll the grid back into view so the user lands on the
+            // newly-shown reviews instead of staring at the prev/next buttons.
+            if (gridRef.current) {
+              const rect    = gridRef.current.getBoundingClientRect();
+              const targetY = window.scrollY + rect.top - 80;
+              window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
+            }
+          };
 
-              <div className="t-meta">
-                <span className="t-name">
-                  {r.customer_name}
-                  {r.source === 'google' && (
-                    <span className="t-source-badge" title="From Google Reviews">G</span>
-                  )}
-                </span>
-                <span className="t-info">
-                  {r.vehicle && <>{r.vehicle} · </>}
-                  {r.service_type && SERVICE_LABELS[r.service_type] && (
-                    <>{SERVICE_LABELS[r.service_type]} · </>
-                  )}
-                  {formatRelative(r.created_at)}
-                </span>
+          return (
+            <>
+              <div className="t-grid" ref={gridRef} key={safePage}>
+                {visible.map((r, i) => (
+                  <article
+                    key={r.id}
+                    className="t-card is-visible"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    <Quote className="t-quote-icon" />
+                    <StarRating value={r.rating} />
+                    <p className="t-comment">{r.comment}</p>
+
+                    {FEATURES.SHOW_REVIEW_PHOTOS && r.photo_urls?.length > 0 && (
+                      <div className="t-photos">
+                        {r.photo_urls.map((url, j) => (
+                          <button
+                            key={j}
+                            type="button"
+                            className="t-photo-thumb"
+                            onClick={() => setLightboxUrl(url)}
+                            aria-label={`View photo ${j + 1}`}
+                          >
+                            <img src={url} alt={`Review photo ${j + 1}`} loading="lazy" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="t-meta">
+                      <span className="t-name">
+                        {r.customer_name}
+                        {r.source === 'google' && (
+                          <span className="t-source-badge" title="From Google Reviews">G</span>
+                        )}
+                      </span>
+                      <span className="t-info">
+                        {r.vehicle && <>{r.vehicle} · </>}
+                        {r.service_type && SERVICE_LABELS[r.service_type] && (
+                          <>{SERVICE_LABELS[r.service_type]} · </>
+                        )}
+                        {formatRelative(r.created_at)}
+                      </span>
+                    </div>
+                  </article>
+                ))}
               </div>
-            </article>
-          ))}
-        </div>
+
+              {totalPages > 1 && (
+                <nav className="t-pager" aria-label="Reviews navigation">
+                  <button
+                    type="button"
+                    className="t-pager-btn"
+                    onClick={() => goTo(safePage - 1)}
+                    disabled={safePage === 0}
+                    aria-label="Previous reviews"
+                  >
+                    ←
+                  </button>
+
+                  <div className="t-pager-dots" role="tablist">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`t-pager-dot${i === safePage ? ' is-active' : ''}`}
+                        onClick={() => goTo(i)}
+                        aria-label={`Page ${i + 1} of ${totalPages}`}
+                        aria-current={i === safePage ? 'true' : undefined}
+                      />
+                    ))}
+                  </div>
+
+                  <span className="t-pager-counter">
+                    {safePage + 1} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="t-pager-btn"
+                    onClick={() => goTo(safePage + 1)}
+                    disabled={safePage >= totalPages - 1}
+                    aria-label="Next reviews"
+                  >
+                    →
+                  </button>
+                </nav>
+              )}
+            </>
+          );
+        })()}
 
         <div className="t-cta-row" data-reveal>
           <p className="t-cta-text">Was your experience worth sharing?</p>

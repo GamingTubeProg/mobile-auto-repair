@@ -158,6 +158,59 @@ const Admin = () => {
   const [entrySaving, setEntrySaving] = useState(false);
   const [entryError,  setEntryError]  = useState('');
 
+  // ── Edit Review modal state ───────────────────────────────
+  const [reviewEdit,        setReviewEdit]        = useState(null); // the row being edited, or null
+  const [reviewEditSaving,  setReviewEditSaving]  = useState(false);
+  const [reviewEditError,   setReviewEditError]   = useState('');
+
+  const openReviewEdit = (review) => {
+    setReviewEdit({ ...review });
+    setReviewEditError('');
+  };
+  const closeReviewEdit = () => {
+    if (reviewEditSaving) return;
+    setReviewEdit(null);
+    setReviewEditError('');
+  };
+  const saveReviewEdit = async () => {
+    if (!reviewEdit) return;
+    setReviewEditError('');
+    if (!reviewEdit.customer_name?.trim()) {
+      setReviewEditError('Name is required.');
+      return;
+    }
+    if (!reviewEdit.comment?.trim() || reviewEdit.comment.trim().length < 5) {
+      setReviewEditError('Comment must be at least 5 characters.');
+      return;
+    }
+    setReviewEditSaving(true);
+    const payload = {
+      customer_name: reviewEdit.customer_name.trim(),
+      rating:        reviewEdit.rating,
+      comment:       reviewEdit.comment.trim(),
+      vehicle:       reviewEdit.vehicle?.trim() || null,
+      service_type:  reviewEdit.service_type || null,
+      source:        reviewEdit.source || 'website',
+    };
+    const { data, error } = await supabase
+      .from('reviews')
+      .update(payload)
+      .eq('id', reviewEdit.id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[Admin] Review update failed:', error);
+      setReviewEditError('Could not save changes. Please try again.');
+      setReviewEditSaving(false);
+      return;
+    }
+    if (data) {
+      setReviews(prev => prev.map(r => r.id === data.id ? { ...r, ...data } : r));
+    }
+    setReviewEditSaving(false);
+    setReviewEdit(null);
+  };
+
   const effective = getEffective(stored);
 
   // Check if local admin server is reachable
@@ -805,6 +858,7 @@ const Admin = () => {
                     {r.status === 'hidden' && (
                       <button className="abt-action-btn complete" disabled={reviewUpdating === r.id} onClick={() => updateReviewStatus(r.id, 'pending')}>Mark Pending</button>
                     )}
+                    <button className="abt-action-btn edit" onClick={() => openReviewEdit(r)}>Edit</button>
                     <button className="abt-action-btn cancel adm-review-delete" disabled={reviewUpdating === r.id} onClick={() => deleteReview(r.id)}>Delete</button>
                   </div>
                 </article>
@@ -1146,6 +1200,116 @@ const Admin = () => {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          EDIT REVIEW MODAL
+          ══════════════════════════════════════════════ */}
+      {reviewEdit && (
+        <div className="adm-modal-overlay" onClick={closeReviewEdit}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Edit Review</h3>
+              <button className="adm-modal-close" onClick={closeReviewEdit} aria-label="Close">✕</button>
+            </div>
+
+            <div className="adm-modal-body">
+              <div className="adm-modal-form">
+
+                <div className="adm-form-row-2col">
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Customer Name</label>
+                    <input
+                      type="text"
+                      className="adm-form-input"
+                      value={reviewEdit.customer_name || ''}
+                      onChange={e => setReviewEdit(r => ({ ...r, customer_name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">Rating</label>
+                    <select
+                      className="adm-form-input"
+                      value={reviewEdit.rating}
+                      onChange={e => setReviewEdit(r => ({ ...r, rating: parseInt(e.target.value, 10) }))}
+                    >
+                      <option value={5}>5 — Excellent</option>
+                      <option value={4}>4 — Good</option>
+                      <option value={3}>3 — Average</option>
+                      <option value={2}>2 — Poor</option>
+                      <option value={1}>1 — Bad</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="adm-form-row">
+                  <label className="adm-form-label">Comment</label>
+                  <textarea
+                    className="adm-form-input adm-form-textarea"
+                    rows={6}
+                    value={reviewEdit.comment || ''}
+                    onChange={e => setReviewEdit(r => ({ ...r, comment: e.target.value }))}
+                  />
+                </div>
+
+                <div className="adm-form-row-2col">
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">
+                      Vehicle <span className="adm-form-optional">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="adm-form-input"
+                      placeholder="e.g. 2019 BMW 320d"
+                      value={reviewEdit.vehicle || ''}
+                      onChange={e => setReviewEdit(r => ({ ...r, vehicle: e.target.value }))}
+                    />
+                  </div>
+                  <div className="adm-form-row">
+                    <label className="adm-form-label">
+                      Service <span className="adm-form-optional">(optional)</span>
+                    </label>
+                    <select
+                      className="adm-form-input"
+                      value={reviewEdit.service_type || ''}
+                      onChange={e => setReviewEdit(r => ({ ...r, service_type: e.target.value || null }))}
+                    >
+                      <option value="">— None —</option>
+                      {Object.entries(SERVICE_LABELS).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="adm-form-row">
+                  <label className="adm-form-label">Source</label>
+                  <select
+                    className="adm-form-input"
+                    value={reviewEdit.source || 'website'}
+                    onChange={e => setReviewEdit(r => ({ ...r, source: e.target.value }))}
+                  >
+                    <option value="website">Website (customer-submitted)</option>
+                    <option value="google">Google (imported)</option>
+                    <option value="manual">Manual (admin-added)</option>
+                  </select>
+                </div>
+
+              </div>
+
+              {reviewEditError && <div className="adm-modal-error">{reviewEditError}</div>}
+            </div>
+
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={closeReviewEdit} disabled={reviewEditSaving}>
+                Cancel
+              </button>
+              <button className="adm-btn adm-btn-primary" onClick={saveReviewEdit} disabled={reviewEditSaving}>
+                {reviewEditSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </div>
       )}

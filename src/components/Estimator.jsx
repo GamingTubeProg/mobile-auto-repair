@@ -52,6 +52,9 @@ const INITIAL_FORM = {
   diyDetails: '',
   shopVisited: false,
   shopDetails: '',
+  // When true, the customer has indicated they already know which service
+  // they need — symptom fields become optional and they can skip ahead.
+  skipDetails: false,
 };
 
 /**
@@ -136,7 +139,12 @@ const Estimator = ({ onRequestPreciseQuote }) => {
   const canProceed = () => {
     if (step === 0) return form.year && form.make && form.model;
     if (step === 1) return !!form.categoryId;
-    if (step === 2) return form.symptoms.length > 0 || form.otherSymptoms.trim().length > 0;
+    if (step === 2) {
+      // Skip-details shortcut lets customers who already know what they
+      // need proceed without picking symptoms or onset.
+      if (form.skipDetails) return true;
+      return form.symptoms.length > 0 || form.otherSymptoms.trim().length > 0;
+    }
     return true;
   };
 
@@ -306,71 +314,89 @@ const Estimator = ({ onRequestPreciseQuote }) => {
             <h4 className="est-panel-title">Details for: <span className="title-accent">{activeCategory.name}</span></h4>
             <p className="est-panel-hint">Check every symptom you&apos;re seeing. More detail = more accurate quote.</p>
 
-            <div className="est-symptoms">
-              {activeCategory.symptoms.map(s => (
-                <label key={s} className={`est-symptom${form.symptoms.includes(s) ? ' checked' : ''}`}>
-                  <input type="checkbox" checked={form.symptoms.includes(s)} onChange={() => toggleSymptom(s)} />
-                  <span className="est-symptom-check"><Check /></span>
-                  <span>{s}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="est-field">
-              <label>Anything else? (optional)</label>
-              <textarea
-                rows="3"
-                placeholder="Describe the noise, smell, or behaviour in your own words..."
-                value={form.otherSymptoms}
-                onChange={e => update({ otherSymptoms: e.target.value })}
+            {/* Skip-details shortcut for customers who already know what they need */}
+            <label className={`est-skip-row${form.skipDetails ? ' checked' : ''}`}>
+              <input
+                type="checkbox"
+                checked={form.skipDetails}
+                onChange={e => update({ skipDetails: e.target.checked })}
               />
-            </div>
+              <span className="est-symptom-check"><Check /></span>
+              <span className="est-skip-text">
+                <strong>I already know which service I need</strong>
+                <span className="est-skip-sub">Skip the questions and go straight to the request.</span>
+              </span>
+            </label>
 
-            <div className="est-grid">
-              <div className="est-field">
-                <label>How long has this been happening?</label>
-                <select value={form.onset} onChange={e => update({ onset: e.target.value })}>
-                  <option value="" disabled hidden>Select...</option>
-                  {onsetOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
+            {!form.skipDetails && (
+              <>
+                <div className="est-symptoms">
+                  {activeCategory.symptoms.map(s => (
+                    <label key={s} className={`est-symptom${form.symptoms.includes(s) ? ' checked' : ''}`}>
+                      <input type="checkbox" checked={form.symptoms.includes(s)} onChange={() => toggleSymptom(s)} />
+                      <span className="est-symptom-check"><Check /></span>
+                      <span>{s}</span>
+                    </label>
+                  ))}
+                </div>
 
-              <div className="est-field">
-                <label>How severe does it feel?</label>
-                <div className="est-severity">
-                  <input
-                    type="range" min="1" max="5" value={form.severity}
-                    onChange={e => update({ severity: parseInt(e.target.value, 10) })}
+                <div className="est-field">
+                  <label>Anything else? (optional)</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Describe the noise, smell, or behaviour in your own words..."
+                    value={form.otherSymptoms}
+                    onChange={e => update({ otherSymptoms: e.target.value })}
                   />
-                  <div className="est-severity-readout">
-                    <span className="est-severity-num">{form.severity}/5</span>
-                    <span className="est-severity-text">{severityLabels[form.severity - 1]}</span>
+                </div>
+
+                <div className="est-grid">
+                  <div className="est-field">
+                    <label>How long has this been happening?</label>
+                    <select value={form.onset} onChange={e => update({ onset: e.target.value })}>
+                      <option value="" disabled hidden>Select...</option>
+                      {onsetOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="est-field">
+                    <label>How severe does it feel?</label>
+                    <div className="est-severity">
+                      <input
+                        type="range" min="1" max="5" value={form.severity}
+                        onChange={e => update({ severity: parseInt(e.target.value, 10) })}
+                      />
+                      <div className="est-severity-readout">
+                        <span className="est-severity-num">{form.severity}/5</span>
+                        <span className="est-severity-text">{severityLabels[form.severity - 1]}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="est-checks">
-              <label className={`est-check-row${form.diyAttempted ? ' checked' : ''}`}>
-                <input type="checkbox" checked={form.diyAttempted} onChange={e => update({ diyAttempted: e.target.checked })} />
-                <span className="est-symptom-check"><Check /></span>
-                <span>I&apos;ve already attempted a DIY repair</span>
-              </label>
-              {form.diyAttempted && (
-                <textarea rows="2" placeholder="What did you try? (parts swapped, tests done, etc.)"
-                  value={form.diyDetails} onChange={e => update({ diyDetails: e.target.value })} />
-              )}
+                <div className="est-checks">
+                  <label className={`est-check-row${form.diyAttempted ? ' checked' : ''}`}>
+                    <input type="checkbox" checked={form.diyAttempted} onChange={e => update({ diyAttempted: e.target.checked })} />
+                    <span className="est-symptom-check"><Check /></span>
+                    <span>I&apos;ve already attempted a DIY repair</span>
+                  </label>
+                  {form.diyAttempted && (
+                    <textarea rows="2" placeholder="What did you try? (parts swapped, tests done, etc.)"
+                      value={form.diyDetails} onChange={e => update({ diyDetails: e.target.value })} />
+                  )}
 
-              <label className={`est-check-row${form.shopVisited ? ' checked' : ''}`}>
-                <input type="checkbox" checked={form.shopVisited} onChange={e => update({ shopVisited: e.target.checked })} />
-                <span className="est-symptom-check"><Check /></span>
-                <span>Another shop has already looked at it</span>
-              </label>
-              {form.shopVisited && (
-                <textarea rows="2" placeholder="What did they say or do?"
-                  value={form.shopDetails} onChange={e => update({ shopDetails: e.target.value })} />
-              )}
-            </div>
+                  <label className={`est-check-row${form.shopVisited ? ' checked' : ''}`}>
+                    <input type="checkbox" checked={form.shopVisited} onChange={e => update({ shopVisited: e.target.checked })} />
+                    <span className="est-symptom-check"><Check /></span>
+                    <span>Another shop has already looked at it</span>
+                  </label>
+                  {form.shopVisited && (
+                    <textarea rows="2" placeholder="What did they say or do?"
+                      value={form.shopDetails} onChange={e => update({ shopDetails: e.target.value })} />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 

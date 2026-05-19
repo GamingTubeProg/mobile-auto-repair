@@ -63,10 +63,10 @@ function getEffective(stored) {
 const ADM_DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ADM_MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ADM_TIME_SLOTS  = [
-  { id: '09:00-11:00', label: '09–11' },
-  { id: '11:00-13:00', label: '11–13' },
-  { id: '13:00-15:00', label: '13–15' },
-  { id: '15:00-17:00', label: '15–17' },
+  { id: '08:00-10:30', label: '8–10:30 AM' },
+  { id: '10:30-13:00', label: '10:30–1 PM' },
+  { id: '13:00-15:30', label: '1–3:30 PM' },
+  { id: '15:30-18:00', label: '3:30–6 PM' },
 ];
 
 /* Slot ranges for the Add Entry / Block Time modal */
@@ -133,6 +133,25 @@ function formatDate(dateStr) {
   if (!dateStr) return '—';
   const [y, m, d] = dateStr.split('-');
   return `${d}.${m}.${y}`;
+}
+
+/** Convert a "HH:MM" 24-hour string to "H AM/PM" (or "H:MM AM/PM"). */
+function to12h(t24) {
+  if (!t24) return '';
+  const [hStr, mStr] = t24.split(':');
+  const h     = parseInt(hStr, 10);
+  const m     = parseInt(mStr, 10);
+  const pm    = h >= 12;
+  const h12   = ((h + 11) % 12) + 1;
+  const mPart = m ? `:${String(m).padStart(2, '0')}` : '';
+  return `${h12}${mPart} ${pm ? 'PM' : 'AM'}`;
+}
+
+/** Format a "HH:MM-HH:MM" slot ID into "H – H AM/PM". Falls back to the raw string. */
+function formatSlot(slotId) {
+  if (!slotId || !slotId.includes('-')) return slotId || '—';
+  const [a, b] = slotId.split('-');
+  return `${to12h(a)} – ${to12h(b)}`;
 }
 
 const Admin = () => {
@@ -255,6 +274,17 @@ const Admin = () => {
     setStatusUpdating(id);
     const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
     if (!error) setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    setStatusUpdating(null);
+  };
+
+  // Hard-delete a cancelled booking from the DB so it no longer
+  // appears in the table at all. Only offered for status='cancelled'
+  // rows — never for pending/confirmed/completed (those keep an audit trail).
+  const deleteBookingPermanently = async (id) => {
+    if (!window.confirm('Permanently delete this cancelled booking? This cannot be undone.')) return;
+    setStatusUpdating(id);
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (!error) setBookings(prev => prev.filter(b => b.id !== id));
     setStatusUpdating(null);
   };
 
@@ -598,7 +628,7 @@ const Admin = () => {
                   {bookings.map(b => (
                     <tr key={b.id} className={`admin-booking-row status-${b.status}`}>
                       <td className="abt-date">{formatDate(b.booking_date)}</td>
-                      <td className="abt-time">{b.time_slot}</td>
+                      <td className="abt-time">{formatSlot(b.time_slot)}</td>
                       <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
                       <td>{b.name || <span className="abt-empty">—</span>}</td>
                       <td>
@@ -626,8 +656,18 @@ const Admin = () => {
                               <button className="abt-action-btn cancel"   disabled={statusUpdating === b.id} onClick={() => updateBookingStatus(b.id, 'cancelled')}>Cancel</button>
                             </>
                           )}
-                          {(b.status === 'completed' || b.status === 'cancelled') && (
+                          {b.status === 'completed' && (
                             <span className="abt-no-action">—</span>
+                          )}
+                          {b.status === 'cancelled' && (
+                            <button
+                              className="abt-action-btn cancel"
+                              disabled={statusUpdating === b.id}
+                              onClick={() => deleteBookingPermanently(b.id)}
+                              title="Permanently delete this cancelled booking from the database"
+                            >
+                              Delete
+                            </button>
                           )}
                         </div>
                       </td>
@@ -1058,12 +1098,12 @@ const Admin = () => {
                       value={entryForm.range}
                       onChange={e => setEntryForm(f => ({ ...f, range: e.target.value }))}
                     >
-                      <option value="slot-0">09:00 – 11:00 (Slot 1 only)</option>
-                      <option value="slot-1">11:00 – 13:00 (Slot 2 only)</option>
-                      <option value="slot-2">13:00 – 15:00 (Slot 3 only)</option>
-                      <option value="slot-3">15:00 – 17:00 (Slot 4 only)</option>
-                      <option value="morning">Morning — 09:00 – 13:00 (slots 1 + 2)</option>
-                      <option value="afternoon">Afternoon — 13:00 – 17:00 (slots 3 + 4)</option>
+                      <option value="slot-0">8 – 10:30 AM (Slot 1 only)</option>
+                      <option value="slot-1">10:30 AM – 1 PM (Slot 2 only)</option>
+                      <option value="slot-2">1 – 3:30 PM (Slot 3 only)</option>
+                      <option value="slot-3">3:30 – 6 PM (Slot 4 only)</option>
+                      <option value="morning">Morning — 8 AM – 1 PM (slots 1 + 2)</option>
+                      <option value="afternoon">Afternoon — 1 – 6 PM (slots 3 + 4)</option>
                       <option value="full">Full Day — all 4 slots</option>
                     </select>
                   </div>
@@ -1133,7 +1173,7 @@ const Admin = () => {
                         onChange={e => setEntryForm(f => ({ ...f, time_slot: e.target.value }))}
                       >
                         {ADM_TIME_SLOTS.map(s => (
-                          <option key={s.id} value={s.id}>{s.id}</option>
+                          <option key={s.id} value={s.id}>{s.label}</option>
                         ))}
                       </select>
                     </div>

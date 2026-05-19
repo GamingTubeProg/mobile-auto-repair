@@ -35,10 +35,11 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // The sticky Call-Now button sits OUTSIDE the page switch so it
-  // appears on every public route at once. It hides itself on /admin
-  // internally via its own check.
-  const callBtn = <StickyCallButton />;
+  // The sticky Call-Now button is the same component everywhere; on
+  // /admin we force it visible even on desktop (alwaysVisible) since
+  // the admin is usually on desktop and needs to be able to call out.
+  const callBtn       = <StickyCallButton />;
+  const callBtnAdmin  = <StickyCallButton alwaysVisible />;
 
   // ── /admin route ─────────────────────────────────────────
   if (path === '/admin') {
@@ -61,7 +62,7 @@ function App() {
       );
     }
     if (!session) return <AdminLogin />;
-    return <Admin />;
+    return <><Admin />{callBtnAdmin}</>;
   }
 
   // ── /booking route ────────────────────────────────────────

@@ -137,7 +137,7 @@ const stats = [
   { value: '15+', label: 'Years Experience', icon: <Award /> },
   { value: '500+', label: 'Vehicles Serviced', icon: <Car /> },
   { value: '100%', label: 'On-Site Service', icon: <MapPin /> },
-  { value: '24/7', label: 'Emergency Calls', icon: <Clock /> },
+  { value: 'Fast', label: 'Emergency Service', icon: <Clock /> },
 ];
 
 const processSteps = [
@@ -168,7 +168,7 @@ const processSteps = [
 ];
 
 const trustBadges = [
-  { icon: <ShieldCheck />, label: 'Fully Insured' },
+  { icon: <ShieldCheck />, label: 'Fully Licensed' },
   { icon: <Award />, label: 'Master Certified' },
   { icon: <Star />, label: 'Top-Rated London ON' },
   { icon: <Clock />, label: 'Same-Day Service' },
@@ -562,7 +562,7 @@ const Home = () => {
           <hr className="divider" />
           <p>
             I am a highly experienced automotive mechanic with a strong background in diagnosing
-            and repairing complex vehicle issues. Having honed my craft in Germany, I specialize
+            and repairing complex vehicle issues. Trained in Germany, I specialize
             in the rigorous demands of European brands such as BMW, Mercedes-Benz, Audi, and Volkswagen.
           </p>
           <p>

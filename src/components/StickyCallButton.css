@@ -2,14 +2,43 @@
    Sticky "Call Now" button — mobile only
    ════════════════════════════════════════════════════════════ */
 
-/* Desktop: hidden entirely — click-to-call adds little value there */
+/* Desktop default: hidden — click-to-call adds little value here.
+   The .always-visible variant (used inside /admin) overrides this. */
 .sticky-call { display: none; }
+
+.sticky-call.always-visible {
+  display: inline-flex;
+  position: fixed;
+  right: 1.5rem;
+  top: 1.5rem;
+  z-index: 900;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--accent-primary);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(230, 92, 0, 0.35);
+}
+.sticky-call.always-visible:hover {
+  background: var(--accent-secondary);
+}
+.sticky-call.always-visible .sticky-call-icon { width: 14px; height: 14px; }
 
 @media (max-width: 768px) {
   .sticky-call {
     position: fixed;
     right: 1rem;
+    /* Default = bottom; .pin-top flips it to top of the viewport.
+       Animated so the transition feels intentional. */
     bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    top: auto;
     z-index: 900;
     display: inline-flex;
     align-items: center;
@@ -25,13 +54,19 @@
     border-radius: 999px;
     text-decoration: none;
     box-shadow: 0 6px 24px rgba(230, 92, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-    /* Subtle pulse so the button reads as actionable */
     animation: sticky-call-pulse 2.4s ease-in-out infinite;
+    transition: top 0.28s ease, bottom 0.28s ease;
+  }
+
+  .sticky-call.pin-top {
+    bottom: auto;
+    /* Below the navbar (~70px) plus safe-area on notched devices */
+    top: calc(5rem + env(safe-area-inset-top, 0px));
   }
 
   .sticky-call:active {
     transform: scale(0.96);
-    transition: transform 0.1s ease;
+    transition: transform 0.1s ease, top 0.28s ease, bottom 0.28s ease;
   }
 
   .sticky-call-icon {

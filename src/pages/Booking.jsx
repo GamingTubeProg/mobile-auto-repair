@@ -13,11 +13,14 @@ const SERVICES = [
   { id: 'sonstiges', label: 'Other',                         desc: 'Consultation or other services' },
 ];
 
+/* Working hours: 8 AM – 6 PM, split into 4 windows of 2.5 hours each.
+   IDs stay in 24-hour format for clean DB storage; labels are AM/PM
+   to match what the customer reads on paper. */
 const TIME_SLOTS = [
-  { id: '09:00-11:00', label: '09:00 – 11:00', sub: 'Morning' },
-  { id: '11:00-13:00', label: '11:00 – 13:00', sub: 'Midday' },
-  { id: '13:00-15:00', label: '13:00 – 15:00', sub: 'Afternoon' },
-  { id: '15:00-17:00', label: '15:00 – 17:00', sub: 'Late Afternoon' },
+  { id: '08:00-10:30', label: '8 – 10:30 AM',    sub: 'Morning' },
+  { id: '10:30-13:00', label: '10:30 AM – 1 PM', sub: 'Midday' },
+  { id: '13:00-15:30', label: '1 – 3:30 PM',     sub: 'Afternoon' },
+  { id: '15:30-18:00', label: '3:30 – 6 PM',     sub: 'Late Afternoon' },
 ];
 
 const DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

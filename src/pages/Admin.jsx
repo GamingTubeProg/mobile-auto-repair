@@ -825,9 +825,9 @@ const Admin = () => {
             <div>
               <h2 className="admin-section-title">Manage Availability</h2>
               <p className="admin-section-sub" style={{ marginBottom: 0 }}>
-                <span className="adm-legend-item free">Free</span> — click to block or create appointment &nbsp;·&nbsp;
                 <span className="adm-legend-item blocked">Blocked</span> — click to unblock &nbsp;·&nbsp;
-                <span className="adm-legend-item booked">Booked</span> — read-only
+                <span className="adm-legend-item booked">Booked</span> — click for details &nbsp;·&nbsp;
+                Empty space = free
               </p>
             </div>
             <div className="admin-bookings-filter" style={{ alignItems: 'center', gap: '0.5rem' }}>
@@ -877,89 +877,87 @@ const Admin = () => {
                       )}
                     </div>
 
-                    {ADM_TIME_SLOTS.map(slot => {
-                      const [sStart, sEnd] = slot.id.split('-');
-
-                      // All non-cancelled bookings whose start/end overlap this 2.5h window
-                      const inSlot = availData.filter(b =>
-                        b.booking_date === dateStr &&
-                        b.status !== 'cancelled' &&
-                        b.start_time && b.end_time &&
-                        b.start_time < sEnd && b.end_time > sStart
+                    {(() => {
+                      // Gather everything for this date that's not cancelled.
+                      const dayItems = availData.filter(b =>
+                        b.booking_date === dateStr && b.status !== 'cancelled'
                       );
-
-                      const blockedRow = inSlot.find(b => b.status === 'blocked');
-                      const bookings   = inSlot.filter(b => b.status !== 'blocked')
-                                              .sort((a, b) => a.start_time.localeCompare(b.start_time));
-                      const toggleKey  = `${dateStr}|${slot.id}`;
-                      const isToggling = slotToggling === toggleKey;
-                      const blockReason = blockedRow?.name?.startsWith('_BLOCKED_: ')
-                        ? blockedRow.name.slice('_BLOCKED_: '.length)
-                        : null;
-
-                      // BLOCKED — show as red "blocked" slot, click to unblock
-                      if (blockedRow) {
-                        return (
-                          <button
-                            key={slot.id}
-                            className={`adm-slot blocked${isPastDay ? ' past' : ''}`}
-                            onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
-                            disabled={isPastDay || isToggling}
-                            title={blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock'}
-                          >
-                            <span className="adm-slot-time">{slot.label}</span>
-                            <span className="adm-slot-sub">
-                              {isToggling ? '…' : (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')}
-                            </span>
-                          </button>
+                      const blockedSlots = ADM_TIME_SLOTS.filter(slot => {
+                        const [sStart, sEnd] = slot.id.split('-');
+                        return dayItems.some(b =>
+                          b.status === 'blocked' &&
+                          b.start_time && b.end_time &&
+                          b.start_time < sEnd && b.end_time > sStart
                         );
-                      }
+                      });
+                      const appts = dayItems
+                        .filter(b => b.status !== 'blocked' && b.start_time && b.end_time)
+                        .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
-                      // HAS APPOINTMENTS — render each as a small clickable card (stacked)
-                      if (bookings.length > 0) {
-                        return (
-                          <div key={slot.id} className="adm-slot-group">
-                            <span className="adm-slot-group-label">{slot.label}</span>
-                            {bookings.map(b => (
+                      const isEmpty = blockedSlots.length === 0 && appts.length === 0;
+
+                      return (
+                        <>
+                          {/* Blocked slots — red, click to unblock */}
+                          {blockedSlots.map(slot => {
+                            const toggleKey  = `${dateStr}|${slot.id}`;
+                            const isToggling = slotToggling === toggleKey;
+                            const blockedRow = dayItems.find(b =>
+                              b.status === 'blocked' && b.time_slot === slot.id
+                            );
+                            const blockReason = blockedRow?.name?.startsWith('_BLOCKED_: ')
+                              ? blockedRow.name.slice('_BLOCKED_: '.length)
+                              : null;
+                            return (
                               <button
-                                key={b.id}
-                                type="button"
-                                className={`adm-appt-card s-${b.status}`}
-                                onClick={() => openBookingDetails(b)}
+                                key={slot.id}
+                                className={`adm-slot blocked${isPastDay ? ' past' : ''}`}
+                                onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
+                                disabled={isPastDay || isToggling}
+                                title={blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock'}
                               >
-                                <span className="adm-appt-time">
-                                  {to12h(b.start_time)} – {to12h(b.end_time)}
+                                <span className="adm-slot-time">{slot.label}</span>
+                                <span className="adm-slot-sub">
+                                  {isToggling ? '…' : (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')}
                                 </span>
-                                <span className="adm-appt-name">{b.name || '—'}</span>
                               </button>
-                            ))}
+                            );
+                          })}
+
+                          {/* Appointment cards — sorted by start time */}
+                          {appts.map(b => (
+                            <button
+                              key={b.id}
+                              type="button"
+                              className={`adm-appt-card s-${b.status}`}
+                              onClick={() => openBookingDetails(b)}
+                            >
+                              <span className="adm-appt-time">
+                                {to12h(b.start_time)} – {to12h(b.end_time)}
+                              </span>
+                              <span className="adm-appt-name">{b.name || '—'}</span>
+                            </button>
+                          ))}
+
+                          {/* Empty hint so completely free days don't look broken */}
+                          {isEmpty && !isPastDay && (
+                            <span className="adm-day-empty">No entries</span>
+                          )}
+
+                          {/* Always-visible "Add Appointment" CTA at the bottom of every (future) day */}
+                          {!isPastDay && (
                             <button
                               type="button"
-                              className="adm-slot-add-inline"
-                              onClick={() => !isPastDay && openEntryModal('appointment', dateStr, slot.id)}
-                              disabled={isPastDay}
-                              title="Add another appointment in this block"
+                              className="adm-day-add"
+                              onClick={() => openEntryModal('appointment', dateStr)}
+                              title={`Add appointment on ${ADM_DAY_NAMES[i]} ${date.getDate()}`}
                             >
                               + Add
                             </button>
-                          </div>
-                        );
-                      }
-
-                      // FREE — click to add an appointment (or block) in this slot
-                      return (
-                        <button
-                          key={slot.id}
-                          className={`adm-slot free${isPastDay ? ' past' : ''}`}
-                          onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
-                          disabled={isPastDay || isToggling}
-                          title="Click to block this slot or create an appointment"
-                        >
-                          <span className="adm-slot-time">{slot.label}</span>
-                          <span className="adm-slot-sub">{isToggling ? '…' : 'Free'}</span>
-                        </button>
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 );
               })}

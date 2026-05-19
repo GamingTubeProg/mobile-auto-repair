@@ -800,6 +800,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  /* Min height so empty days don't collapse to nothing — feels uniform
+     across the week even when most days are empty. */
+  min-height: 320px;
 }
 
 .adm-avail-col.past { opacity: 0.38; pointer-events: none; }
@@ -911,27 +914,6 @@
 .adm-slot:disabled { opacity: 0.4; cursor: not-allowed; }
 .adm-slot.past     { opacity: 0.3; }
 
-/* ── New: a "block" container that holds N appointments ── */
-.adm-slot-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.35rem 0.3rem;
-  border: 1px dashed rgba(255,255,255,0.08);
-  border-radius: 3px;
-  min-height: 60px;
-}
-.adm-slot-group-label {
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 0.15rem;
-}
-
 .adm-appt-card {
   display: flex;
   flex-direction: column;
@@ -981,24 +963,38 @@
   text-overflow: ellipsis;
 }
 
-.adm-slot-add-inline {
-  margin-top: 0.15rem;
-  padding: 0.25rem 0.3rem;
-  font-size: 0.58rem;
+/* "+ Add" button at the bottom of every day column — quick way to
+   add an appointment to that day. Looks dashed/quiet so it doesn't
+   compete with actual content. */
+.adm-day-add {
+  margin-top: auto; /* push to bottom of flex column */
+  padding: 0.5rem 0.4rem;
+  font-size: 0.65rem;
   font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   background: transparent;
   border: 1px dashed var(--border-color);
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.15s ease;
+  width: 100%;
 }
-.adm-slot-add-inline:hover:not(:disabled) {
+.adm-day-add:hover {
   color: var(--accent-primary);
   border-color: var(--accent-primary);
   background: rgba(230,92,0,0.05);
+}
+
+/* Tiny placeholder shown only when a day has zero entries — keeps
+   the column from looking like a layout bug. */
+.adm-day-empty {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  font-style: italic;
+  padding: 0.5rem 0;
 }
 
 /* ── Booking details modal ── */

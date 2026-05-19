@@ -932,6 +932,20 @@
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+.adm-appt-card[draggable="true"] { cursor: grab; }
+.adm-appt-card[draggable="true"]:active { cursor: grabbing; }
+.adm-appt-card.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.97);
+}
+
+/* Day column highlights when a card is being dragged over it */
+.adm-avail-col.drag-over {
+  background: rgba(230, 92, 0, 0.06);
+  outline: 2px dashed var(--accent-primary);
+  outline-offset: -4px;
+  border-radius: 4px;
+}
 .adm-appt-card.s-pending {
   border-color: rgba(230,92,0,0.4);
   background: rgba(230,92,0,0.06);
@@ -1048,6 +1062,50 @@
 .adm-btn.adm-btn-danger:hover:not(:disabled) {
   background: rgba(239,68,68,0.1);
   border-color: #ef4444;
+}
+
+/* Conflict warning shown in the Edit modal when a reschedule overlaps
+   with an existing appointment. Non-blocking — informational only. */
+.adm-modal-warning {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(243, 156, 18, 0.08);
+  border: 1px solid var(--accent-secondary);
+  border-left-width: 4px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+.adm-modal-warning strong {
+  display: block;
+  color: var(--accent-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.adm-modal-warning p { margin: 0.25rem 0; color: var(--text-muted); }
+.adm-modal-warning ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0.5rem;
+}
+.adm-modal-warning li {
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed rgba(243, 156, 18, 0.2);
+  font-size: 0.82rem;
+}
+.adm-modal-warning li:last-child { border-bottom: none; }
+.adm-modal-warning li em {
+  color: var(--text-muted);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+.adm-modal-warning-note {
+  margin-top: 0.5rem !important;
+  font-size: 0.75rem !important;
+  font-style: italic;
 }
 
 /* Vehicle label inside booked slot chip */

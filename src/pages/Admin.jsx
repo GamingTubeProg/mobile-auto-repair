@@ -213,6 +213,51 @@ const Admin = () => {
   const [bookingEditSaving, setBookingEditSaving] = useState(false);
   const [bookingEditError,  setBookingEditError]  = useState('');
 
+  // ── Drag-and-drop appointment reschedule state ───────────
+  const [dragId,     setDragId]     = useState(null); // id of booking being dragged
+  const [dragOverDate, setDragOverDate] = useState(null); // date currently hovered
+
+  // Drop the dragged booking onto a different date. Same start/end time,
+  // just a new booking_date. Optimistic state update first, then DB.
+  const handleApptDrop = async (targetDate) => {
+    const id = dragId;
+    setDragId(null);
+    setDragOverDate(null);
+    if (!id || !targetDate) return;
+    const moving = availData.find(b => b.id === id);
+    if (!moving || moving.booking_date === targetDate) return;
+
+    // Optimistic
+    setAvailData(prev => prev.map(b => b.id === id ? { ...b, booking_date: targetDate } : b));
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, booking_date: targetDate } : b));
+
+    const { error } = await supabase
+      .from('bookings').update({ booking_date: targetDate }).eq('id', id);
+    if (error) {
+      // Roll back on failure
+      setAvailData(prev => prev.map(b => b.id === id ? { ...b, booking_date: moving.booking_date } : b));
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, booking_date: moving.booking_date } : b));
+      console.error('[Admin] Failed to move appointment:', error);
+      window.alert('Could not move the appointment. Please try again.');
+    }
+  };
+
+  // Find appointments that overlap with the booking being edited.
+  // Returns an array of booking rows from `bookings` (NOT the edit itself).
+  // Cancelled and blocked rows are ignored. Same booking_date required.
+  const findBookingConflicts = (edit) => {
+    if (!edit || !edit.start_time || !edit.end_time || !edit.booking_date) return [];
+    return bookings.filter(b =>
+      b.id !== edit.id &&
+      b.booking_date === edit.booking_date &&
+      b.status !== 'cancelled' &&
+      b.status !== 'blocked' &&
+      b.start_time && b.end_time &&
+      b.start_time < edit.end_time &&
+      b.end_time > edit.start_time
+    );
+  };
+
   const openBookingDetails = (b) => {
     setBookingDetails(b);
     setBookingEdit(null);
@@ -859,7 +904,25 @@ const Admin = () => {
                 const isBlocking = dayBlocking === dateStr;
 
                 return (
-                  <div key={dateStr} className={`adm-avail-col${isPastDay ? ' past' : ''}`}>
+                  <div
+                    key={dateStr}
+                    className={`adm-avail-col${isPastDay ? ' past' : ''}${dragOverDate === dateStr ? ' drag-over' : ''}`}
+                    onDragOver={e => {
+                      if (!dragId || isPastDay) return;
+                      e.preventDefault();
+                      if (dragOverDate !== dateStr) setDragOverDate(dateStr);
+                    }}
+                    onDragLeave={e => {
+                      // Only clear when we truly leave the column, not its child elements
+                      if (e.currentTarget.contains(e.relatedTarget)) return;
+                      if (dragOverDate === dateStr) setDragOverDate(null);
+                    }}
+                    onDrop={e => {
+                      if (!dragId || isPastDay) return;
+                      e.preventDefault();
+                      handleApptDrop(dateStr);
+                    }}
+                  >
                     <div className="adm-avail-col-hdr">
                       <span className="adm-avail-col-day">{ADM_DAY_NAMES[i]}</span>
                       <span className="adm-avail-col-date">
@@ -924,13 +987,22 @@ const Admin = () => {
                             );
                           })}
 
-                          {/* Appointment cards — sorted by start time */}
+                          {/* Appointment cards — sorted by start time, drag-to-reschedule */}
                           {appts.map(b => (
                             <button
                               key={b.id}
                               type="button"
-                              className={`adm-appt-card s-${b.status}`}
-                              onClick={() => openBookingDetails(b)}
+                              className={`adm-appt-card s-${b.status}${dragId === b.id ? ' is-dragging' : ''}`}
+                              onClick={() => dragId == null && openBookingDetails(b)}
+                              draggable={!isPastDay}
+                              onDragStart={e => {
+                                setDragId(b.id);
+                                e.dataTransfer.effectAllowed = 'move';
+                                // Some browsers require setData to begin a drag
+                                e.dataTransfer.setData('text/plain', b.id);
+                              }}
+                              onDragEnd={() => { setDragId(null); setDragOverDate(null); }}
+                              title="Click for details · Drag to another day to reschedule"
                             >
                               <span className="adm-appt-time">
                                 {to12h(b.start_time)} – {to12h(b.end_time)}
@@ -1704,6 +1776,36 @@ const Admin = () => {
                 </div>
 
               </div>
+
+              {/* Conflict warning — non-blocking, just informational.
+                  Lets admin double-book on purpose (e.g. two short jobs
+                  back-to-back) but flags the overlap clearly. */}
+              {(() => {
+                const conflicts = findBookingConflicts(bookingEdit);
+                if (conflicts.length === 0) return null;
+                return (
+                  <div className="adm-modal-warning">
+                    <strong>⚠ Time overlap</strong>
+                    <p>The new time conflicts with:</p>
+                    <ul>
+                      {conflicts.map(c => (
+                        <li key={c.id}>
+                          <strong>{to12h(c.start_time)} – {to12h(c.end_time)}</strong>
+                          {' · '}
+                          {c.name || '(no name)'}
+                          {' · '}
+                          <em>{STATUS_LABELS[c.status]?.label ?? c.status}</em>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="adm-modal-warning-note">
+                      You can still save — the system won&apos;t stop you. Just make sure
+                      this overlap is intentional.
+                    </p>
+                  </div>
+                );
+              })()}
+
               {bookingEditError && <div className="adm-modal-error">{bookingEditError}</div>}
             </div>
             <div className="adm-modal-footer adm-modal-footer-edit">

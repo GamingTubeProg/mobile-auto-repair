@@ -33,6 +33,16 @@ const FEATURE_DEFS = [
     defaultVal: true,
     tag: 'Reviews',
   },
+  {
+    key: 'STICKY_CALL_BUTTON',
+    label: 'Sticky "Call Now" Button (Mobile)',
+    description:
+      'When ON, a floating orange "Call Now" button is shown at the bottom-right of every ' +
+      'page on mobile devices, making it one-tap to phone you. Hidden on desktop. ' +
+      'Turn off if it feels intrusive or during quiet hours.',
+    defaultVal: true,
+    tag: 'Layout',
+  },
 ];
 
 function loadStored() {

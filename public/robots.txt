@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Internal pages — not for indexing
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://www.mobile-auto-repair.ca/sitemap.xml

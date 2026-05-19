@@ -1,0 +1,182 @@
+/* ════════════════════════════════════════════════════════════
+   Pre-Purchase Inspection landing page
+   ════════════════════════════════════════════════════════════ */
+
+.ppi-hero {
+  padding: 7rem 0 4rem;
+  background:
+    radial-gradient(ellipse at 60% 0%, rgba(230, 92, 0, 0.14), transparent 60%),
+    var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+.ppi-hero-inner { max-width: 760px; }
+
+.ppi-hero-sub {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 640px;
+}
+
+.ppi-hero-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+.ppi-hero-actions .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ppi-hero-actions svg { width: 16px; height: 16px; }
+
+.ppi-hero-stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.ppi-hero-stats > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.ppi-hero-stats svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-primary);
+}
+
+/* ── Checks section ── */
+.ppi-checks { padding: 6rem 0; }
+
+.ppi-section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 3.5rem;
+}
+.ppi-section-lede {
+  margin-top: 1rem;
+  font-size: 0.98rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.ppi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.ppi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 2rem 1.75rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.ppi-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-3px);
+}
+
+.ppi-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--accent-primary);
+  margin-bottom: 1.25rem;
+}
+.ppi-card-icon svg { width: 22px; height: 22px; }
+
+.ppi-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+}
+.ppi-card p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+/* ── Why section ── */
+.ppi-why {
+  padding: 6rem 0;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+.ppi-why-inner { max-width: 820px; }
+.ppi-why-text p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-top: 1rem;
+}
+
+.ppi-bullet-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.ppi-bullet-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+.ppi-bullet-list svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--accent-primary);
+  margin-top: 2px;
+}
+
+/* ── CTA ── */
+.ppi-cta {
+  padding: 5rem 0 6rem;
+  text-align: center;
+}
+.ppi-cta-inner > p {
+  margin-top: 1rem;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+.ppi-cta-actions {
+  display: inline-flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .ppi-hero { padding: 6rem 0 3rem; }
+  .ppi-hero-sub { font-size: 0.95rem; }
+  .ppi-hero-actions .btn { width: 100%; justify-content: center; }
+  .ppi-hero-stats { gap: 1rem 1.5rem; }
+  .ppi-checks { padding: 4rem 0; }
+  .ppi-section-header { margin-bottom: 2.5rem; }
+  .ppi-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .ppi-card { padding: 1.5rem 1.25rem; }
+  .ppi-why { padding: 4rem 0; }
+  .ppi-cta { padding: 4rem 0; }
+  .ppi-cta-actions .btn { width: 100%; justify-content: center; }
+}

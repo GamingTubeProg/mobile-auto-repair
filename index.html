@@ -2,9 +2,97 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mobile Auto Repair - London, Ontario</title>
+    <meta name="theme-color" content="#e65c00" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- ── Primary SEO ─────────────────────────────────────── -->
+    <title>Mobile Auto Repair — On-Site Auto Mechanic in London, Ontario</title>
+    <meta name="description" content="Professional mobile auto repair in London, Ontario. We come to your driveway: diagnostics, engine, brakes, electrical, ECU tuning, batteries & maintenance. Same-day service. Call 519-617-7214." />
+    <meta name="keywords" content="mobile auto repair, mobile mechanic London Ontario, on-site car repair, mobile mechanic St. Thomas, ECU tuning London, mobile diagnostics, mobile brake repair, mobile battery replacement" />
+    <meta name="author" content="Mobile Auto Repair" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.mobile-auto-repair.ca/" />
+
+    <!-- ── Open Graph (Facebook, LinkedIn, WhatsApp previews) ── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.mobile-auto-repair.ca/" />
+    <meta property="og:title" content="Mobile Auto Repair — On-Site Auto Mechanic in London, Ontario" />
+    <meta property="og:description" content="Professional on-site car repair in London, Ontario. Diagnostics, engine, brakes, ECU tuning & more — we come to your driveway. Same-day service available." />
+    <meta property="og:image" content="https://www.mobile-auto-repair.ca/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:site_name" content="Mobile Auto Repair" />
+
+    <!-- ── Twitter Card ──────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mobile Auto Repair — On-Site Auto Mechanic in London, Ontario" />
+    <meta name="twitter:description" content="Professional mobile auto repair: diagnostics, engine, brakes, ECU tuning — we come to your driveway. Call 519-617-7214." />
+    <meta name="twitter:image" content="https://www.mobile-auto-repair.ca/og-image.jpg" />
+
+    <!-- ── Microsoft Clarity (heatmap + session recordings) ──
+         Reads the project ID from VITE_CLARITY_ID at build time.
+         If the env var is empty the script is skipped entirely. -->
+    <script>
+      (function () {
+        var id = "%VITE_CLARITY_ID%";
+        if (!id || id.indexOf("%") === 0) return;
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r); t.async=1; t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", id);
+      })();
+    </script>
+
+    <!-- ── Schema.org structured data — AutoRepair LocalBusiness ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoRepair",
+      "name": "Mobile Auto Repair",
+      "image": "https://www.mobile-auto-repair.ca/og-image.jpg",
+      "url": "https://www.mobile-auto-repair.ca",
+      "telephone": "+1-519-617-7214",
+      "email": "mobile-auto-repair@outlook.com",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "London",
+        "addressRegion": "ON",
+        "addressCountry": "CA"
+      },
+      "areaServed": [
+        { "@type": "City", "name": "London, Ontario" },
+        { "@type": "City", "name": "St. Thomas, Ontario" },
+        { "@type": "City", "name": "Strathroy, Ontario" }
+      ],
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "reviewCount": "17",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "makesOffer": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mobile Diagnostics" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Brake Repair" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Engine Repair" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Battery Replacement" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "ECU Tuning" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Pre-Purchase Inspection" } }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

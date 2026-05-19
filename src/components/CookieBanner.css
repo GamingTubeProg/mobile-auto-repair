@@ -1,0 +1,95 @@
+/* ════════════════════════════════════════════════════════════
+   Cookie consent banner
+   ════════════════════════════════════════════════════════════ */
+
+.cookie-banner {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 800;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  padding: 1rem 1.25rem;
+  animation: cookie-banner-slide 0.35s ease-out;
+  /* Don't overlap the sticky call button on mobile — call button is right:1rem */
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+@keyframes cookie-banner-slide {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cookie-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.cookie-banner-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+  min-width: 240px;
+}
+
+.cookie-banner-text a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.cookie-banner-btn {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+}
+
+.cookie-banner-decline:hover {
+  border-color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.cookie-banner-accept {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+.cookie-banner-accept:hover {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+@media (max-width: 600px) {
+  .cookie-banner {
+    /* Sit above the Sticky Call button (which is right:1rem bottom:1rem,
+       ~50px tall). Leaving extra clearance so neither overlaps. */
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.85rem 1rem;
+  }
+  .cookie-banner-text { font-size: 0.8rem; }
+  .cookie-banner-actions { width: 100%; justify-content: stretch; }
+  .cookie-banner-btn { flex: 1; padding: 0.7rem 0.8rem; font-size: 0.72rem; }
+}

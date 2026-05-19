@@ -1,0 +1,84 @@
+/* ════════════════════════════════════════════════════════════
+   Legal pages (Privacy Policy, Terms of Service)
+   ════════════════════════════════════════════════════════════ */
+
+.legal-hero {
+  padding: 7rem 0 3rem;
+  background:
+    radial-gradient(ellipse at 60% 0%, rgba(230, 92, 0, 0.10), transparent 55%),
+    var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+.legal-hero-inner { max-width: 760px; }
+
+.legal-updated {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+}
+
+.legal-article {
+  max-width: 780px;
+  padding-top: 3rem;
+  padding-bottom: 6rem;
+  line-height: 1.7;
+}
+
+.legal-intro {
+  font-size: 1rem;
+  color: var(--text-main);
+  padding: 1.5rem 1.75rem;
+  background: rgba(230, 92, 0, 0.06);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 2rem;
+}
+
+.legal-article h2 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.legal-article p,
+.legal-article li {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.legal-article p { margin-bottom: 1rem; }
+
+.legal-article ul {
+  margin: 0 0 1.25rem 1.5rem;
+  padding: 0;
+}
+.legal-article ul li { margin-bottom: 0.5rem; }
+
+.legal-article strong { color: var(--text-main); }
+
+.legal-article a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-decoration-color: rgba(230, 92, 0, 0.4);
+  text-underline-offset: 3px;
+}
+.legal-article a:hover { color: var(--accent-secondary); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .legal-hero { padding: 6rem 0 2rem; }
+  .legal-article { padding-top: 2rem; padding-bottom: 4rem; }
+  .legal-article h2 { font-size: 1.05rem; margin-top: 2rem; }
+  .legal-article p, .legal-article li { font-size: 0.9rem; }
+  .legal-intro { padding: 1.1rem 1.25rem; font-size: 0.92rem; }
+}

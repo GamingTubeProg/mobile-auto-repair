@@ -16,6 +16,7 @@ const Footer = () => {
             <h4>Quick Links</h4>
             <ul>
               <li><a href="#services">Services</a></li>
+              <li><a href="/pre-purchase-inspection">Pre-Purchase Inspection</a></li>
               <li><a href="#about">About Kal</a></li>
               <li><a href="/booking">Book Appointment</a></li>
               <li><a href="/review">Leave a Review</a></li>
@@ -31,6 +32,11 @@ const Footer = () => {
         </div>
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Mobile Auto Repair. All rights reserved.</p>
+          <p className="footer-legal">
+            <a href="/privacy">Privacy Policy</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/terms">Terms of Service</a>
+          </p>
         </div>
       </div>
     </footer>

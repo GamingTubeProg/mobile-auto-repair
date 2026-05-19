@@ -36,9 +36,18 @@ const DEFAULTS = {
    * false → Photos are still uploaded and stored, but never rendered
    *         publicly (only the text + name + rating shows).
    */
+  /**
+   * STICKY_CALL_BUTTON
+   * true  → A floating "Call Now" button appears at the bottom-right of
+   *         the screen on mobile (phones + small tablets), making it
+   *         one-tap to call. Hidden on desktop where a phone number
+   *         click-to-call is less useful.
+   * false → Button is never rendered.
+   */
   ESTIMATOR_SHOW_PRICE: false,
   ESTIMATOR_ENABLED:    true,
   SHOW_REVIEW_PHOTOS:   true,
+  STICKY_CALL_BUTTON:   true,
 };
 
 // ── localStorage override (set from /admin panel) ──────────

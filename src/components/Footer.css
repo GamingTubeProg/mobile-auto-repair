@@ -61,6 +61,21 @@
   font-size: 0.9rem;
 }
 
+.footer-legal {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+.footer-legal a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.footer-legal a:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;

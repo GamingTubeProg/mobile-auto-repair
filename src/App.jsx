@@ -6,7 +6,13 @@ import Admin from './pages/Admin';
 import Tuning from './pages/Tuning';
 import Booking from './pages/Booking';
 import Reviews from './pages/Reviews';
+import PrePurchaseInspection from './pages/PrePurchaseInspection';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import NotFound from './pages/NotFound';
+import CookieBanner from './components/CookieBanner';
 import AdminLogin from './components/AdminLogin';
+import StickyCallButton from './components/StickyCallButton';
 import { supabase } from './lib/supabase';
 
 const path = window.location.pathname;
@@ -28,6 +34,11 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // The sticky Call-Now button sits OUTSIDE the page switch so it
+  // appears on every public route at once. It hides itself on /admin
+  // internally via its own check.
+  const callBtn = <StickyCallButton />;
 
   // ── /admin route ─────────────────────────────────────────
   if (path === '/admin') {
@@ -54,24 +65,40 @@ function App() {
   }
 
   // ── /booking route ────────────────────────────────────────
-  if (path === '/booking') return <Booking />;
+  if (path === '/booking') return <><Booking />{callBtn}<CookieBanner /></>;
 
   // ── /review route ────────────────────────────────────────
-  if (path === '/review' || path === '/reviews') return <Reviews />;
+  if (path === '/review' || path === '/reviews') return <><Reviews />{callBtn}<CookieBanner /></>;
 
   // ── /tuning route ─────────────────────────────────────────
-  if (path === '/tuning') return <Tuning />;
+  if (path === '/tuning') return <><Tuning />{callBtn}<CookieBanner /></>;
 
-  // ── Home ──────────────────────────────────────────────────
-  return (
-    <div className="app">
-      <Navbar />
-      <main>
-        <Home />
-      </main>
-      <Footer />
-    </div>
-  );
+  // ── /pre-purchase-inspection route ────────────────────────
+  if (path === '/pre-purchase-inspection' || path === '/inspection') {
+    return <><PrePurchaseInspection />{callBtn}<CookieBanner /></>;
+  }
+
+  // ── Legal routes ──────────────────────────────────────────
+  if (path === '/privacy') return <><Privacy />{callBtn}<CookieBanner /></>;
+  if (path === '/terms')   return <><Terms />{callBtn}<CookieBanner /></>;
+
+  // ── Home (root path only) ─────────────────────────────────
+  if (path === '/' || path === '') {
+    return (
+      <div className="app">
+        <Navbar />
+        <main>
+          <Home />
+        </main>
+        <Footer />
+        {callBtn}
+        <CookieBanner />
+      </div>
+    );
+  }
+
+  // ── 404 — anything else falls through here ────────────────
+  return <><NotFound />{callBtn}</>;
 }
 
 export default App;

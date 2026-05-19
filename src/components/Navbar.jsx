@@ -46,6 +46,7 @@ const Navbar = ({ tuningPage = false, bookingPage = false, reviewsPage = false }
             </a>
           </li>
           <li><a href={pfx + '#about'} onClick={close}>About</a></li>
+          <li><a href={pfx + '#testimonials'} onClick={close}>Reviews</a></li>
           <li>
             {FEATURES.ESTIMATOR_ENABLED ? (
               <a

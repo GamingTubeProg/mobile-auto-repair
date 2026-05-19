@@ -584,9 +584,40 @@
 
 .admin-bookings-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* needed for sticky cells to keep their bg */
+  border-spacing: 0;
   font-size: 0.875rem;
   min-width: 720px;
+}
+
+/* Keep the first two columns (Actions + Status) visible when the
+   table is scrolled horizontally on mobile. Backgrounds are opaque
+   so content under the sticky cell doesn't show through. */
+.admin-bookings-table th:nth-child(1),
+.admin-bookings-table td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
+.admin-bookings-table thead th:nth-child(1) {
+  background: var(--bg-dark);
+}
+.admin-bookings-table th:nth-child(2),
+.admin-bookings-table td:nth-child(2) {
+  position: sticky;
+  left: 130px;  /* approx width of the Actions column */
+  z-index: 1;
+  background: var(--bg-card);
+}
+.admin-bookings-table thead th:nth-child(2) {
+  background: var(--bg-dark);
+}
+/* Subtle shadow on the right edge of the sticky group so the
+   scrolling content visually slides "under" it. */
+.admin-bookings-table td:nth-child(2),
+.admin-bookings-table th:nth-child(2) {
+  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.6);
 }
 
 .admin-bookings-table thead tr {
@@ -606,14 +637,17 @@
   white-space: nowrap;
 }
 
-.admin-booking-row {
-  border-bottom: 1px solid var(--border-color);
-  transition: background 0.15s;
-}
-
-.admin-booking-row:last-child { border-bottom: none; }
-
+.admin-booking-row { transition: background 0.15s; }
 .admin-booking-row:hover { background: rgba(255,255,255,0.025); }
+
+/* With border-collapse:separate the row border has to live on each
+   cell; put a 1px bottom border on every td to draw the row separators. */
+.admin-booking-row td {
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-booking-row:last-child td {
+  border-bottom: none;
+}
 
 .admin-booking-row.status-cancelled { opacity: 0.5; }
 

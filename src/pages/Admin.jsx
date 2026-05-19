@@ -820,38 +820,19 @@ const Admin = () => {
               <table className="admin-bookings-table">
                 <thead>
                   <tr>
+                    <th>Actions</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Service</th>
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Vehicle</th>
-                    <th>Status</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map(b => (
                     <tr key={b.id} className={`admin-booking-row status-${b.status}`}>
-                      <td className="abt-date">{formatDate(b.booking_date)}</td>
-                      <td className="abt-time">
-                        {b.start_time && b.end_time
-                          ? `${to12h(b.start_time)} – ${to12h(b.end_time)}`
-                          : formatSlot(b.time_slot)}
-                      </td>
-                      <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
-                      <td>{b.name || <span className="abt-empty">—</span>}</td>
-                      <td>
-                        {b.phone
-                          ? <a href={`tel:${b.phone}`} className="abt-phone">{b.phone}</a>
-                          : <span className="abt-empty">—</span>}
-                      </td>
-                      <td className="abt-vehicle">{b.vehicle || <span className="abt-empty">—</span>}</td>
-                      <td>
-                        <span className={`abt-badge abt-badge-${STATUS_LABELS[b.status]?.color ?? 'grey'}`}>
-                          {STATUS_LABELS[b.status]?.label ?? b.status}
-                        </span>
-                      </td>
                       <td>
                         <div className="abt-actions">
                           {b.status === 'pending' && (
@@ -888,6 +869,25 @@ const Admin = () => {
                           </button>
                         </div>
                       </td>
+                      <td>
+                        <span className={`abt-badge abt-badge-${STATUS_LABELS[b.status]?.color ?? 'grey'}`}>
+                          {STATUS_LABELS[b.status]?.label ?? b.status}
+                        </span>
+                      </td>
+                      <td className="abt-date">{formatDate(b.booking_date)}</td>
+                      <td className="abt-time">
+                        {b.start_time && b.end_time
+                          ? `${to12h(b.start_time)} – ${to12h(b.end_time)}`
+                          : formatSlot(b.time_slot)}
+                      </td>
+                      <td>{SERVICE_LABELS[b.service_type] ?? b.service_type}</td>
+                      <td>{b.name || <span className="abt-empty">—</span>}</td>
+                      <td>
+                        {b.phone
+                          ? <a href={`tel:${b.phone}`} className="abt-phone">{b.phone}</a>
+                          : <span className="abt-empty">—</span>}
+                      </td>
+                      <td className="abt-vehicle">{b.vehicle || <span className="abt-empty">—</span>}</td>
                     </tr>
                   ))}
                 </tbody>

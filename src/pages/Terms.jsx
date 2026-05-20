@@ -51,6 +51,12 @@ export default function Terms() {
           service area. If a trip outside that area is required, any travel surcharge will be
           disclosed in advance.
         </p>
+        <p>
+          A <strong>minimum charge of $80 CAD</strong> applies to any service call where work
+          is performed on-site. This covers the technician&apos;s time, basic diagnostic
+          equipment, and travel within the standard service area. The minimum is included
+          in — not added to — the final quote.
+        </p>
 
         <h2>4. Payment</h2>
         <p>

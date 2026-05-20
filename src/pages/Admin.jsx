@@ -63,21 +63,26 @@ function getEffective(stored) {
 const ADM_DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ADM_MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ADM_TIME_SLOTS  = [
-  { id: '08:00-10:30', label: '8–10:30 AM' },
-  { id: '10:30-13:00', label: '10:30–1 PM' },
-  { id: '13:00-15:30', label: '1–3:30 PM' },
-  { id: '15:30-18:00', label: '3:30–6 PM' },
+  { id: '08:00-09:40', label: '8–9:40 AM'    },
+  { id: '09:40-11:20', label: '9:40–11:20 AM' },
+  { id: '11:20-13:00', label: '11:20–1 PM'   },
+  { id: '13:00-14:40', label: '1–2:40 PM'    },
+  { id: '14:40-16:20', label: '2:40–4:20 PM' },
+  { id: '16:20-18:00', label: '4:20–6 PM'    },
 ];
 
 /* Slot ranges for the Add Entry / Block Time modal */
 const RANGE_TO_SLOTS = {
-  'slot-0':    ['09:00-11:00'],
-  'slot-1':    ['11:00-13:00'],
-  'slot-2':    ['13:00-15:00'],
-  'slot-3':    ['15:00-17:00'],
-  'morning':   ['09:00-11:00', '11:00-13:00'],
-  'afternoon': ['13:00-15:00', '15:00-17:00'],
-  'full':      ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00'],
+  'slot-0':    ['08:00-09:40'],
+  'slot-1':    ['09:40-11:20'],
+  'slot-2':    ['11:20-13:00'],
+  'slot-3':    ['13:00-14:40'],
+  'slot-4':    ['14:40-16:20'],
+  'slot-5':    ['16:20-18:00'],
+  'morning':   ['08:00-09:40', '09:40-11:20', '11:20-13:00'],
+  'afternoon': ['13:00-14:40', '14:40-16:20', '16:20-18:00'],
+  'full':      ['08:00-09:40', '09:40-11:20', '11:20-13:00',
+                '13:00-14:40', '14:40-16:20', '16:20-18:00'],
 };
 
 function todayStr() {
@@ -1348,13 +1353,15 @@ const Admin = () => {
                       value={entryForm.range}
                       onChange={e => setEntryForm(f => ({ ...f, range: e.target.value }))}
                     >
-                      <option value="slot-0">8 – 10:30 AM (Slot 1 only)</option>
-                      <option value="slot-1">10:30 AM – 1 PM (Slot 2 only)</option>
-                      <option value="slot-2">1 – 3:30 PM (Slot 3 only)</option>
-                      <option value="slot-3">3:30 – 6 PM (Slot 4 only)</option>
-                      <option value="morning">Morning — 8 AM – 1 PM (slots 1 + 2)</option>
-                      <option value="afternoon">Afternoon — 1 – 6 PM (slots 3 + 4)</option>
-                      <option value="full">Full Day — all 4 slots</option>
+                      <option value="slot-0">8 – 9:40 AM (Slot 1)</option>
+                      <option value="slot-1">9:40 – 11:20 AM (Slot 2)</option>
+                      <option value="slot-2">11:20 AM – 1 PM (Slot 3)</option>
+                      <option value="slot-3">1 – 2:40 PM (Slot 4)</option>
+                      <option value="slot-4">2:40 – 4:20 PM (Slot 5)</option>
+                      <option value="slot-5">4:20 – 6 PM (Slot 6)</option>
+                      <option value="morning">Morning — 8 AM – 1 PM (slots 1–3)</option>
+                      <option value="afternoon">Afternoon — 1 – 6 PM (slots 4–6)</option>
+                      <option value="full">Full Day — all 6 slots</option>
                     </select>
                   </div>
 

@@ -13,14 +13,17 @@ const SERVICES = [
   { id: 'sonstiges', label: 'Other',                         desc: 'Consultation or other services' },
 ];
 
-/* Working hours: 8 AM – 6 PM, split into 4 windows of 2.5 hours each.
-   IDs stay in 24-hour format for clean DB storage; labels are AM/PM
-   to match what the customer reads on paper. */
+/* Working hours: 8 AM – 6 PM, split into 6 windows of 1h 40min each
+   (600 minutes / 6 = 100 minutes). Finer granularity gives customers
+   more precise time options. IDs stay in 24-hour format for clean DB
+   storage; labels are AM/PM. */
 const TIME_SLOTS = [
-  { id: '08:00-10:30', label: '8 – 10:30 AM',    sub: 'Morning' },
-  { id: '10:30-13:00', label: '10:30 AM – 1 PM', sub: 'Midday' },
-  { id: '13:00-15:30', label: '1 – 3:30 PM',     sub: 'Afternoon' },
-  { id: '15:30-18:00', label: '3:30 – 6 PM',     sub: 'Late Afternoon' },
+  { id: '08:00-09:40', label: '8 – 9:40 AM',      sub: 'Early Morning' },
+  { id: '09:40-11:20', label: '9:40 – 11:20 AM',  sub: 'Late Morning'  },
+  { id: '11:20-13:00', label: '11:20 AM – 1 PM',  sub: 'Midday'        },
+  { id: '13:00-14:40', label: '1 – 2:40 PM',      sub: 'Early Afternoon' },
+  { id: '14:40-16:20', label: '2:40 – 4:20 PM',   sub: 'Mid Afternoon' },
+  { id: '16:20-18:00', label: '4:20 – 6 PM',      sub: 'Late Afternoon' },
 ];
 
 const DAY_NAMES   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -78,8 +81,10 @@ function isToday(date) {
 }
 
 function isPast(date) {
+  // Today itself counts as bookable — admin confirms by phone so they
+  // can quickly decline if the requested time has already passed.
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  return date <= today;
+  return date < today;
 }
 
 function isTooFar(date) {

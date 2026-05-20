@@ -16,24 +16,21 @@ import './StickyCallButton.css';
 const PHONE = '519-617-7214';
 
 export default function StickyCallButton({ alwaysVisible = false }) {
-  // Pin to top vs bottom — defaults to bottom (false).
-  const [pinTop, setPinTop] = useState(false);
+  // Defaults to bottom; the button moves to the TOP as soon as the
+  // page has been scrolled away from the very top. Reason: the
+  // bottom-right thumb-zone causes accidental taps and covers
+  // page content while scrolling. Only at the very top of the
+  // page — where there's nothing to scroll *up* to anyway — does
+  // it sit at the bottom so it doesn't overlap the hero.
+  const [pinTop, setPinTop] = useState(
+    typeof window !== 'undefined' && window.scrollY > 50
+  );
   const lastY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
 
   useEffect(() => {
     const onScroll = () => {
-      const y     = window.scrollY;
-      const delta = y - lastY.current;
-      // Ignore tiny scroll noise
-      if (Math.abs(delta) < 6) return;
-      if (delta < 0) {
-        // Scrolling up → move button to top
-        setPinTop(true);
-      } else if (delta > 0 && y > 200) {
-        // Scrolling down past a small threshold → move back to bottom
-        setPinTop(false);
-      }
-      lastY.current = y;
+      setPinTop(window.scrollY > 50);
+      lastY.current = window.scrollY;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);

@@ -14,8 +14,18 @@ const Navbar = ({ tuningPage = false, bookingPage = false, reviewsPage = false }
 
   const close = () => setMenuOpen(false);
 
-  // On sub-pages, anchor links need the home-page prefix
-  const pfx = (tuningPage || bookingPage || reviewsPage) ? '/' : '';
+  // Anchor links to homepage sections (#services, #about, #testimonials,
+  // #estimator, #home) only work when we're actually on the homepage —
+  // on every other route we have to prefix with "/" so the browser
+  // navigates home first, then scrolls to the section. The legacy
+  // tuningPage/bookingPage/reviewsPage props are still used elsewhere
+  // for the "nav-active" highlight, but the prefix logic is now based
+  // on the actual current URL so newer pages (faq, privacy, terms,
+  // pre-purchase-inspection) work automatically without needing a prop.
+  const isHome = typeof window === 'undefined'
+    || window.location.pathname === '/'
+    || window.location.pathname === '';
+  const pfx = isHome ? '' : '/';
 
   return (
     <nav className={`navbar${scrolled ? ' is-scrolled' : ''}`}>

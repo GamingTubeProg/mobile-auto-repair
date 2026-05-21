@@ -281,6 +281,35 @@ const Home = () => {
   const rootRef = useRef(null);
   useScrollReveal(rootRef);
 
+  // Hash navigation from a subpage (e.g. /faq → Reviews link emits
+  // /#testimonials) lands here BEFORE React has rendered every section.
+  // The browser's native scroll either gives up or settles on the nearest
+  // already-present element, which is why users were ending up at the
+  // Estimator block instead of #services / #about / #testimonials.
+  //
+  // Poll for up to 3 s for the actual target element, then smooth-scroll
+  // to it ourselves once it exists.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || hash === '#') return;
+    let tries = 0;
+    const max = 15;
+    const poll = () => {
+      const el = document.querySelector(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return true;
+      }
+      return false;
+    };
+    // Immediate attempt — element might already be there
+    if (poll()) return;
+    const t = setInterval(() => {
+      if (poll() || ++tries >= max) clearInterval(t);
+    }, 200);
+    return () => clearInterval(t);
+  }, []);
+
   // Controlled contact-form state.
   const [contactForm,  setContactForm]  = useState(EMPTY_FORM);
   const [submitting,   setSubmitting]   = useState(false);

@@ -1,10 +1,17 @@
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './LegalPage.css';
 
 const LAST_UPDATED = 'May 18, 2026';
 
 export default function Terms() {
+  usePageMeta({
+    title:       'Terms of Service — Mobile Auto Repair',
+    description: 'Terms governing Mobile Auto Repair’s mobile mechanic services in London, Ontario — appointment requests, pricing, $80 minimum charge, workmanship, warranty, and cancellation.',
+    path:        '/terms',
+  });
+
   return (
     <div className="app">
       <Navbar />

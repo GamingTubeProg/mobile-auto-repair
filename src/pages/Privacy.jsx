@@ -1,10 +1,17 @@
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './LegalPage.css';
 
 const LAST_UPDATED = 'May 18, 2026';
 
 export default function Privacy() {
+  usePageMeta({
+    title:       'Privacy Policy — Mobile Auto Repair',
+    description: 'How Mobile Auto Repair collects, uses, and protects your personal information. PIPEDA-compliant policy covering bookings, reviews, third-party services and your data rights.',
+    path:        '/privacy',
+  });
+
   return (
     <div className="app">
       <Navbar />

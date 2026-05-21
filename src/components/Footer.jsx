@@ -19,6 +19,7 @@ const Footer = () => {
               <li><a href="/pre-purchase-inspection">Pre-Purchase Inspection</a></li>
               <li><a href="#about">About Kal</a></li>
               <li><a href="/booking">Book Appointment</a></li>
+              <li><a href="/faq">FAQ</a></li>
               <li><a href="/review">Leave a Review</a></li>
               <li><a href="#contact">Contact</a></li>
             </ul>

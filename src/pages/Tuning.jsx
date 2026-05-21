@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { VEHICLES, SERVICE_INFO } from '../data/tuningData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './Tuning.css';
 
 /* ── helpers ── */
@@ -277,6 +278,12 @@ function DeCoopBadge() {
 
 /* ── Main Page ── */
 export default function Tuning() {
+  usePageMeta({
+    title:       'ECU Tuning — Mobile Auto Repair London, Ontario',
+    description: 'Stage 1 / Stage 2 ECU tuning, EGR / DPF / AdBlue delete, and bench-mode programming. We come to you in London, Ontario. Browse supported vehicles or call 519-617-7214.',
+    path:        '/tuning',
+  });
+
   const [make,   setMake]   = useState('');
   const [model,  setModel]  = useState('');
   const [engine, setEngine] = useState('');

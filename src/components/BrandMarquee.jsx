@@ -147,7 +147,7 @@ export default function BrandMarquee() {
               <div className="brand-marquee__logo-wrap">
                 <img
                   src={b.src}
-                  alt={b.name}
+                  alt={`${b.name} logo — serviced by Mobile Auto Repair`}
                   className="brand-marquee__img"
                   loading="lazy"
                   draggable="false"

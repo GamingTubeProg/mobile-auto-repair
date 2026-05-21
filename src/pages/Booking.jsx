@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './Booking.css';
 
 /* ── Constants ────────────────────────────────────────── */
@@ -120,6 +121,12 @@ function StepBar({ step }) {
 
 /* ── Main component ───────────────────────────────────── */
 export default function Booking() {
+  usePageMeta({
+    title:       'Book an Appointment — Mobile Auto Repair London, Ontario',
+    description: 'Book your mobile auto repair appointment online — we come to your driveway in London, Ontario. Same-day slots often available. Diagnostics, brakes, engine, electrical & more.',
+    path:        '/booking',
+  });
+
   const [step,         setStep]        = useState(1);
   const [service,      setService]     = useState('');
   const [fromEstimate, setFromEstimate] = useState(null);

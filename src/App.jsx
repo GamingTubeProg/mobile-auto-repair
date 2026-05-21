@@ -9,6 +9,7 @@ import Reviews from './pages/Reviews';
 import PrePurchaseInspection from './pages/PrePurchaseInspection';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import FAQ from './pages/FAQ';
 import NotFound from './pages/NotFound';
 import CookieBanner from './components/CookieBanner';
 import AdminLogin from './components/AdminLogin';
@@ -82,6 +83,9 @@ function App() {
   // ── Legal routes ──────────────────────────────────────────
   if (path === '/privacy') return <><Privacy />{callBtn}<CookieBanner /></>;
   if (path === '/terms')   return <><Terms />{callBtn}<CookieBanner /></>;
+
+  // ── /faq route ────────────────────────────────────────────
+  if (path === '/faq')     return <><FAQ />{callBtn}<CookieBanner /></>;
 
   // ── Home (root path only) ─────────────────────────────────
   if (path === '/' || path === '') {

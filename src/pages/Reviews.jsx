@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './Reviews.css';
 
 const MAX_PHOTOS    = 3;
@@ -65,6 +66,12 @@ async function compressImage(file) {
 }
 
 export default function Reviews() {
+  usePageMeta({
+    title:       'Leave a Review — Mobile Auto Repair London, Ontario',
+    description: 'Share your experience with Mobile Auto Repair. Your review helps other London-area drivers find a trusted mobile mechanic. Photos welcome.',
+    path:        '/review',
+  });
+
   const [form, setForm] = useState({
     customer_name: '',
     rating:        5,

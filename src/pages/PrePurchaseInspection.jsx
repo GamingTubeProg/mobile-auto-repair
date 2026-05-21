@@ -1,6 +1,7 @@
 import { ClipboardCheck, Search, FileText, ShieldCheck, Car, Clock, MapPin, Phone, CheckCircle2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import usePageMeta from '../utils/usePageMeta';
 import './PrePurchaseInspection.css';
 
 const CHECKS = [
@@ -13,6 +14,12 @@ const CHECKS = [
 ];
 
 export default function PrePurchaseInspection() {
+  usePageMeta({
+    title:       'Pre-Purchase Inspection — Mobile Auto Repair London, Ontario',
+    description: 'Independent 60-point pre-purchase inspection at the seller’s location. We test engine, brakes, suspension, electronics, paint thickness and OBD-II history before you buy a used car.',
+    path:        '/pre-purchase-inspection',
+  });
+
   return (
     <div className="app">
       <Navbar />

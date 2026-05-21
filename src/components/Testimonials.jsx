@@ -77,6 +77,22 @@ export default function Testimonials() {
     load();
   }, []);
 
+  // If the user arrived on the homepage via a #testimonials hash link
+  // (e.g. from /faq → Reviews in navbar), the browser's native scroll
+  // happens BEFORE this section finishes loading from Supabase and the
+  // <section id="testimonials"> doesn't exist yet. After the data is
+  // in and the section is mounted, scroll it into view ourselves.
+  useEffect(() => {
+    if (loading) return;
+    if (window.location.hash !== '#testimonials') return;
+    if (!sectionRef.current) return;
+    // Defer one frame so the section's reveal animation has time to
+    // start before the scroll lands.
+    requestAnimationFrame(() => {
+      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [loading]);
+
   // Re-attach scroll-reveal observer for elements rendered AFTER the page's
   // top-level observer ran. The Home page sets up its IntersectionObserver
   // synchronously on mount, but this section's elements are added later

@@ -1032,7 +1032,7 @@ const Admin = () => {
 
                       return (
                         <>
-                          {/* Blocked slots — red, click to unblock */}
+                          {/* Blocked slots — red, draggable to another day, X to remove */}
                           {blockedSlots.map(slot => {
                             const toggleKey  = `${dateStr}|${slot.id}`;
                             const isToggling = slotToggling === toggleKey;
@@ -1043,43 +1043,79 @@ const Admin = () => {
                               ? blockedRow.name.slice('_BLOCKED_: '.length)
                               : null;
                             return (
-                              <button
+                              <div
                                 key={slot.id}
-                                className={`adm-slot blocked${isPastDay ? ' past' : ''}`}
-                                onClick={() => !isPastDay && !isToggling && toggleSlot(dateStr, slot.id)}
-                                disabled={isPastDay || isToggling}
-                                title={blockReason ? `Blocked: ${blockReason} — click to unblock` : 'Blocked — click to unblock'}
+                                className={`adm-slot blocked${isPastDay ? ' past' : ''}${dragId === blockedRow?.id ? ' is-dragging' : ''}`}
+                                draggable={!isPastDay && !!blockedRow}
+                                onDragStart={e => {
+                                  if (!blockedRow) return;
+                                  setDragId(blockedRow.id);
+                                  e.dataTransfer.effectAllowed = 'move';
+                                  e.dataTransfer.setData('text/plain', blockedRow.id);
+                                }}
+                                onDragEnd={() => { setDragId(null); setDragOverDate(null); }}
+                                title={blockReason ? `Blocked: ${blockReason} — drag to move · X to remove` : 'Blocked — drag to move · X to remove'}
                               >
                                 <span className="adm-slot-time">{slot.label}</span>
                                 <span className="adm-slot-sub">
-                                  {isToggling ? '…' : (blockReason ? `✕ ${blockReason}` : 'Blocked ✕')}
+                                  {isToggling ? '…' : (blockReason || 'Blocked')}
                                 </span>
-                              </button>
+                                {/* Big X for one-tap removal — no confirm because it's just a block */}
+                                {!isPastDay && (
+                                  <button
+                                    type="button"
+                                    className="adm-card-x"
+                                    onClick={e => { e.stopPropagation(); toggleSlot(dateStr, slot.id); }}
+                                    disabled={isToggling}
+                                    aria-label="Remove block"
+                                    title="Remove block"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
                             );
                           })}
 
-                          {/* Appointment cards — sorted by start time, drag-to-reschedule */}
+                          {/* Appointment cards — sorted by start time, drag to reschedule, X to cancel */}
                           {appts.map(b => (
-                            <button
+                            <div
                               key={b.id}
-                              type="button"
                               className={`adm-appt-card s-${b.status}${dragId === b.id ? ' is-dragging' : ''}`}
                               onClick={() => dragId == null && openBookingDetails(b)}
                               draggable={!isPastDay}
                               onDragStart={e => {
                                 setDragId(b.id);
                                 e.dataTransfer.effectAllowed = 'move';
-                                // Some browsers require setData to begin a drag
                                 e.dataTransfer.setData('text/plain', b.id);
                               }}
                               onDragEnd={() => { setDragId(null); setDragOverDate(null); }}
+                              role="button"
+                              tabIndex={0}
                               title="Click for details · Drag to another day to reschedule"
                             >
                               <span className="adm-appt-time">
                                 {to12h(b.start_time)} – {to12h(b.end_time)}
                               </span>
                               <span className="adm-appt-name">{b.name || '—'}</span>
-                            </button>
+                              {/* Big X — confirms because real customer bookings should not be lost by mistake */}
+                              {!isPastDay && (
+                                <button
+                                  type="button"
+                                  className="adm-card-x"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    if (window.confirm(`Cancel the appointment for ${b.name || 'this customer'}?`)) {
+                                      updateBookingStatus(b.id, 'cancelled');
+                                    }
+                                  }}
+                                  aria-label="Cancel appointment"
+                                  title="Cancel appointment"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
                           ))}
 
                           {/* Empty hint so completely free days don't look broken */}

@@ -954,11 +954,52 @@
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+.adm-appt-card { position: relative; }
 .adm-appt-card[draggable="true"] { cursor: grab; }
 .adm-appt-card[draggable="true"]:active { cursor: grabbing; }
 .adm-appt-card.is-dragging {
   opacity: 0.45;
   transform: scale(0.97);
+}
+
+/* Make blocked slot containers also positioned + draggable cursor */
+.adm-slot.blocked { position: relative; }
+.adm-slot.blocked[draggable="true"] { cursor: grab; }
+.adm-slot.blocked[draggable="true"]:active { cursor: grabbing; }
+.adm-slot.blocked.is-dragging { opacity: 0.45; transform: scale(0.97); }
+
+/* Big X button in the top-right corner of every card — one tap kill.
+   Sized generously (≥28px) for thumb-friendly mobile use. */
+.adm-card-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+  z-index: 3;
+  padding: 0;
+}
+.adm-card-x:hover:not(:disabled) {
+  background: #ef4444;
+}
+.adm-card-x:active { transform: scale(0.9); }
+.adm-card-x:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* On mobile, X grows so thumbs can hit it cleanly */
+@media (max-width: 600px) {
+  .adm-card-x { width: 26px; height: 26px; font-size: 0.78rem; }
 }
 
 /* Day column highlights when a card is being dragged over it */
@@ -1591,36 +1632,42 @@
   .adm-form-row-2col { grid-template-columns: 1fr; }
   .adm-block-day-btn { font-size: 0.45rem; padding: 0.1rem 0.25rem; }
 
-  /* ── Appointments table — make every column as small as possible ── */
+  /* ── Appointments table — use FULL page width, columns minimal ── */
+  /* Cancel section padding around the table so it spans edge-to-edge */
+  .admin-section:has(.admin-bookings-table-wrap) { padding-left: 0.2rem; padding-right: 0.2rem; }
+  .admin-bookings-table-wrap { border-left: none; border-right: none; }
   .admin-bookings-table { font-size: 0.72rem; min-width: 0; }
   .admin-bookings-table th,
   .admin-bookings-table td {
-    padding: 0.5rem 0.55rem;
+    padding: 0.45rem 0.5rem;
     white-space: nowrap;
   }
   .admin-bookings-table th {
-    font-size: 0.58rem;
-    letter-spacing: 0.06em;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
   }
   /* Status badge: tighter */
   .admin-bookings-table .abt-badge {
-    padding: 0.18rem 0.45rem;
-    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.55rem;
   }
-  /* Action buttons: compact + wrap so 2-3 fit in narrower column */
+  /* Actions column: very compact icon-style buttons, stacked vertically */
+  .admin-bookings-table td:nth-child(1) { padding: 0.4rem 0.3rem; }
   .admin-bookings-table .abt-actions {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.2rem;
-    min-width: 76px;
+    gap: 0.18rem;
+    min-width: 56px;
   }
   .admin-bookings-table .abt-action-btn {
-    padding: 0.35rem 0.45rem;
-    font-size: 0.62rem;
-    letter-spacing: 0.02em;
+    padding: 0.3rem 0.35rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.01em;
+    border-width: 1px;
+    min-width: 0;
   }
-  /* Date column: shorter format works in JS, but also reduce visual weight */
-  .admin-bookings-table .abt-date { font-size: 0.7rem; }
-  .admin-bookings-table .abt-time { font-size: 0.68rem; }
-  .admin-bookings-table .abt-phone { font-size: 0.7rem; }
+  /* Compact data columns */
+  .admin-bookings-table .abt-date  { font-size: 0.68rem; }
+  .admin-bookings-table .abt-time  { font-size: 0.65rem; }
+  .admin-bookings-table .abt-phone { font-size: 0.68rem; }
 }

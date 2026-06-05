@@ -36,11 +36,10 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // The sticky Call-Now button is the same component everywhere; on
-  // /admin we force it visible even on desktop (alwaysVisible) since
-  // the admin is usually on desktop and needs to be able to call out.
-  const callBtn       = <StickyCallButton />;
-  const callBtnAdmin  = <StickyCallButton alwaysVisible />;
+  // The sticky Call-Now button is rendered on every public route but
+  // never on /admin — admin doesn't need a "call us" CTA on their own
+  // dashboard, and the button just covered controls.
+  const callBtn = <StickyCallButton />;
 
   // ── /admin route ─────────────────────────────────────────
   if (path === '/admin') {
@@ -63,7 +62,7 @@ function App() {
       );
     }
     if (!session) return <AdminLogin />;
-    return <><Admin />{callBtnAdmin}</>;
+    return <Admin />;
   }
 
   // ── /booking route ────────────────────────────────────────

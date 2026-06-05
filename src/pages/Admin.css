@@ -590,34 +590,22 @@
   min-width: 720px;
 }
 
-/* Keep the first two columns (Actions + Status) visible when the
-   table is scrolled horizontally on mobile. Backgrounds are opaque
-   so content under the sticky cell doesn't show through. */
+/* Keep only the Actions column (first) sticky when the table is
+   scrolled horizontally — Status was sticky too but ended up
+   taking up too much screen on mobile. Status now scrolls with
+   the rest. */
 .admin-bookings-table th:nth-child(1),
 .admin-bookings-table td:nth-child(1) {
   position: sticky;
   left: 0;
   z-index: 2;
   background: var(--bg-card);
+  /* Right-edge shadow so the scrolling content visibly slides
+     under this fixed column. */
+  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.6);
 }
 .admin-bookings-table thead th:nth-child(1) {
   background: var(--bg-dark);
-}
-.admin-bookings-table th:nth-child(2),
-.admin-bookings-table td:nth-child(2) {
-  position: sticky;
-  left: 130px;  /* approx width of the Actions column */
-  z-index: 1;
-  background: var(--bg-card);
-}
-.admin-bookings-table thead th:nth-child(2) {
-  background: var(--bg-dark);
-}
-/* Subtle shadow on the right edge of the sticky group so the
-   scrolling content visually slides "under" it. */
-.admin-bookings-table td:nth-child(2),
-.admin-bookings-table th:nth-child(2) {
-  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.6);
 }
 
 .admin-bookings-table thead tr {
@@ -1368,6 +1356,18 @@
 }
 .adm-block-day-btn:disabled { opacity: 0.4; cursor: wait; }
 
+/* Toggle: when the day is already blocked, the same slot becomes
+   "Unblock Day" — green to signal a positive, undo-style action. */
+.adm-block-day-btn.is-unblock {
+  color: rgba(34, 197, 94, 0.75);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.adm-block-day-btn.is-unblock:hover:not(:disabled) {
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.08);
+}
+
 /* ══════════════════════════════════════════════════════════
    Add Entry Modal
    ══════════════════════════════════════════════════════════ */
@@ -1590,4 +1590,37 @@
   .adm-modal { max-height: 92vh; border-left: none; border-right: none; border-bottom: none; }
   .adm-form-row-2col { grid-template-columns: 1fr; }
   .adm-block-day-btn { font-size: 0.45rem; padding: 0.1rem 0.25rem; }
+
+  /* ── Appointments table — make every column as small as possible ── */
+  .admin-bookings-table { font-size: 0.72rem; min-width: 0; }
+  .admin-bookings-table th,
+  .admin-bookings-table td {
+    padding: 0.5rem 0.55rem;
+    white-space: nowrap;
+  }
+  .admin-bookings-table th {
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+  }
+  /* Status badge: tighter */
+  .admin-bookings-table .abt-badge {
+    padding: 0.18rem 0.45rem;
+    font-size: 0.6rem;
+  }
+  /* Action buttons: compact + wrap so 2-3 fit in narrower column */
+  .admin-bookings-table .abt-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+    min-width: 76px;
+  }
+  .admin-bookings-table .abt-action-btn {
+    padding: 0.35rem 0.45rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+  }
+  /* Date column: shorter format works in JS, but also reduce visual weight */
+  .admin-bookings-table .abt-date { font-size: 0.7rem; }
+  .admin-bookings-table .abt-time { font-size: 0.68rem; }
+  .admin-bookings-table .abt-phone { font-size: 0.7rem; }
 }

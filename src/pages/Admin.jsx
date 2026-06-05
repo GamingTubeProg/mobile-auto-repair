@@ -488,6 +488,25 @@ const Admin = () => {
     }
   };
 
+  // Unblock every blocked slot on a given day in one click. Inverse
+  // of blockDay() — used by the same button when the day is already
+  // blocked.
+  const unblockDay = async (dateStr) => {
+    setDayBlocking(dateStr);
+    const blockedIds = availData
+      .filter(b => b.booking_date === dateStr && b.status === 'blocked')
+      .map(b => b.id);
+    if (blockedIds.length > 0) {
+      const { error } = await supabase
+        .from('bookings').update({ status: 'cancelled' }).in('id', blockedIds);
+      if (!error) {
+        setAvailData(prev => prev.filter(b => !blockedIds.includes(b.id)));
+        refreshFromDb();
+      }
+    }
+    setDayBlocking(null);
+  };
+
   // Block all free slots on a given day at once
   const blockDay = async (dateStr) => {
     setDayBlocking(dateStr);
@@ -963,16 +982,33 @@ const Admin = () => {
                       <span className="adm-avail-col-date">
                         {date.getDate()} {ADM_MONTH_SHORT[date.getMonth()]}
                       </span>
-                      {!isPastDay && (
-                        <button
-                          className="adm-block-day-btn"
-                          onClick={() => blockDay(dateStr)}
-                          disabled={isBlocking}
-                          title="Block all free slots on this day"
-                        >
-                          {isBlocking ? '…' : 'Block Day'}
-                        </button>
-                      )}
+                      {!isPastDay && (() => {
+                        const dayHasBlocked = availData.some(b =>
+                          b.booking_date === dateStr && b.status === 'blocked'
+                        );
+                        if (dayHasBlocked) {
+                          return (
+                            <button
+                              className="adm-block-day-btn is-unblock"
+                              onClick={() => unblockDay(dateStr)}
+                              disabled={isBlocking}
+                              title="Unblock every blocked slot on this day"
+                            >
+                              {isBlocking ? '…' : 'Unblock Day'}
+                            </button>
+                          );
+                        }
+                        return (
+                          <button
+                            className="adm-block-day-btn"
+                            onClick={() => blockDay(dateStr)}
+                            disabled={isBlocking}
+                            title="Block all free slots on this day"
+                          >
+                            {isBlocking ? '…' : 'Block Day'}
+                          </button>
+                        );
+                      })()}
                     </div>
 
                     {(() => {

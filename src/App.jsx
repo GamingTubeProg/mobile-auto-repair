@@ -15,8 +15,15 @@ import CookieBanner from './components/CookieBanner';
 import AdminLogin from './components/AdminLogin';
 import StickyCallButton from './components/StickyCallButton';
 import { supabase } from './lib/supabase';
+import { trackPageView } from './utils/trackPageView';
 
 const path = window.location.pathname;
+
+// Fire a page-view event once per route load. /admin is filtered
+// inside trackPageView so admins don't appear in their own stats.
+if (typeof window !== 'undefined') {
+  trackPageView(path || '/');
+}
 
 function App() {
   // undefined = still checking, null = not logged in, object = logged in

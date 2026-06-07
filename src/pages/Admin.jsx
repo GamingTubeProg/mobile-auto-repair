@@ -198,6 +198,11 @@ const Admin = () => {
   const [reviewsFilter,  setReviewsFilter]  = useState('pending');
   const [reviewUpdating, setReviewUpdating] = useState(null);
 
+  // ── Analytics state ──────────────────────────────────────
+  const [analytics,        setAnalytics]        = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsRange,   setAnalyticsRange]   = useState(7); // days
+
   // ── Add Entry modal state ────────────────────────────────
   const [entryModal,  setEntryModal]  = useState(false);
   const [entryMode,   setEntryMode]   = useState('block');
@@ -683,6 +688,110 @@ const Admin = () => {
     refreshFromDb();
   };
 
+  // Load analytics: pull raw page_views for the chosen range, aggregate
+  // client-side. Cap at 20k rows to keep memory bounded — typical traffic
+  // for a local mechanic well under that, but a defensive limit.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAnalytics() {
+      setAnalyticsLoading(true);
+      const since = new Date();
+      since.setDate(since.getDate() - analyticsRange);
+      const { data, error } = await supabase
+        .from('page_views')
+        .select('created_at, path, source, device, session_id')
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(20000);
+      if (cancelled) return;
+      if (error) {
+        console.error('[Analytics] load failed:', error);
+        setAnalytics(null);
+        setAnalyticsLoading(false);
+        return;
+      }
+      const rows = data ?? [];
+
+      // KPIs
+      const sessions     = new Set(rows.map(r => r.session_id).filter(Boolean));
+      const totalViews   = rows.length;
+      const totalSessions = sessions.size;
+      // Single-page sessions (sessions with exactly 1 view) — bounce
+      const viewsBySession = rows.reduce((m, r) => {
+        if (!r.session_id) return m;
+        m.set(r.session_id, (m.get(r.session_id) || 0) + 1);
+        return m;
+      }, new Map());
+      const bounces = [...viewsBySession.values()].filter(n => n === 1).length;
+      const bounceRate = totalSessions ? Math.round((bounces / totalSessions) * 100) : 0;
+
+      // Top pages
+      const byPath = rows.reduce((m, r) => {
+        m.set(r.path, (m.get(r.path) || 0) + 1);
+        return m;
+      }, new Map());
+      const topPages = [...byPath.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([path, count]) => ({ path, count }));
+
+      // Traffic sources
+      const bySource = rows.reduce((m, r) => {
+        const s = r.source || 'direct';
+        m.set(s, (m.get(s) || 0) + 1);
+        return m;
+      }, new Map());
+      const sources = [...bySource.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([source, count]) => ({ source, count }));
+
+      // Device split
+      const byDevice = rows.reduce((m, r) => {
+        const d = r.device || 'desktop';
+        m.set(d, (m.get(d) || 0) + 1);
+        return m;
+      }, new Map());
+      const devices = [...byDevice.entries()]
+        .map(([device, count]) => ({ device, count }));
+
+      // Hour-of-day heat: which hours are busiest
+      const byHour = Array(24).fill(0);
+      rows.forEach(r => {
+        const h = new Date(r.created_at).getHours();
+        byHour[h] += 1;
+      });
+
+      // Day-by-day trend for chart
+      const dailyMap = new Map();
+      rows.forEach(r => {
+        const d = new Date(r.created_at).toISOString().slice(0, 10);
+        dailyMap.set(d, (dailyMap.get(d) || 0) + 1);
+      });
+      // Fill missing days with 0 so the chart is continuous
+      const dailySeries = [];
+      for (let i = analyticsRange - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        dailySeries.push({ date: key, count: dailyMap.get(key) || 0 });
+      }
+
+      setAnalytics({
+        totalViews,
+        totalSessions,
+        bounceRate,
+        topPages,
+        sources,
+        devices,
+        byHour,
+        dailySeries,
+      });
+      setAnalyticsLoading(false);
+    }
+    loadAnalytics();
+    return () => { cancelled = true; };
+  }, [analyticsRange, refreshTick]);
+
   // Load reviews
   useEffect(() => {
     async function loadReviews() {
@@ -914,6 +1023,184 @@ const Admin = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </section>
+
+        {/* ══════════════════════════════════════════════
+            ANALYTICS SECTION — cookie-less, Supabase-backed
+            ══════════════════════════════════════════════ */}
+        <section className="admin-section">
+          <div className="admin-bookings-header">
+            <div>
+              <h2 className="admin-section-title">Analytics</h2>
+              <p className="admin-section-sub" style={{ marginBottom: 0 }}>
+                Anonymous, cookie-less visitor stats. /admin views are
+                excluded so your own dashboard checks don&apos;t skew numbers.
+              </p>
+            </div>
+            <div className="admin-bookings-filter">
+              {[
+                { v: 1,  l: 'Today' },
+                { v: 7,  l: '7 Days' },
+                { v: 30, l: '30 Days' },
+                { v: 90, l: '90 Days' },
+              ].map(o => (
+                <button
+                  key={o.v}
+                  className={`adm-btn adm-btn-small${analyticsRange === o.v ? ' adm-btn-primary' : ' adm-btn-ghost'}`}
+                  onClick={() => setAnalyticsRange(o.v)}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {analyticsLoading ? (
+            <div className="admin-bookings-empty">Loading analytics…</div>
+          ) : !analytics || analytics.totalViews === 0 ? (
+            <div className="admin-bookings-empty">
+              No page views recorded yet for this range. Tracking only
+              starts after the latest deploy is live, so this section
+              fills up as visitors arrive.
+            </div>
+          ) : (
+            <div className="adm-analytics">
+              {/* KPI cards */}
+              <div className="adm-kpi-grid">
+                <div className="adm-kpi">
+                  <span className="adm-kpi-label">Page Views</span>
+                  <span className="adm-kpi-value">{analytics.totalViews.toLocaleString()}</span>
+                </div>
+                <div className="adm-kpi">
+                  <span className="adm-kpi-label">Unique Sessions</span>
+                  <span className="adm-kpi-value">{analytics.totalSessions.toLocaleString()}</span>
+                </div>
+                <div className="adm-kpi">
+                  <span className="adm-kpi-label">Bounce Rate</span>
+                  <span className="adm-kpi-value">{analytics.bounceRate}%</span>
+                  <span className="adm-kpi-hint">single-page visits</span>
+                </div>
+                <div className="adm-kpi">
+                  <span className="adm-kpi-label">Avg / Session</span>
+                  <span className="adm-kpi-value">
+                    {analytics.totalSessions
+                      ? (analytics.totalViews / analytics.totalSessions).toFixed(1)
+                      : '0'}
+                  </span>
+                  <span className="adm-kpi-hint">pages per visit</span>
+                </div>
+              </div>
+
+              {/* Daily trend bar chart */}
+              <div className="adm-chart-card">
+                <h4 className="adm-chart-title">Daily Page Views</h4>
+                <div className="adm-bars">
+                  {(() => {
+                    const max = Math.max(1, ...analytics.dailySeries.map(d => d.count));
+                    return analytics.dailySeries.map(d => (
+                      <div key={d.date} className="adm-bar-col" title={`${d.date}: ${d.count}`}>
+                        <div className="adm-bar" style={{ height: `${(d.count / max) * 100}%` }}>
+                          {d.count > 0 && <span className="adm-bar-num">{d.count}</span>}
+                        </div>
+                        <span className="adm-bar-lbl">{d.date.slice(5)}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              <div className="adm-analytics-2col">
+                {/* Top pages */}
+                <div className="adm-chart-card">
+                  <h4 className="adm-chart-title">Top Pages</h4>
+                  <ul className="adm-bar-list">
+                    {analytics.topPages.map(p => {
+                      const max = analytics.topPages[0].count;
+                      return (
+                        <li key={p.path}>
+                          <span className="adm-bar-list-lbl" title={p.path}>{p.path}</span>
+                          <span className="adm-bar-list-bar">
+                            <span style={{ width: `${(p.count / max) * 100}%` }} />
+                          </span>
+                          <span className="adm-bar-list-num">{p.count}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                {/* Traffic sources */}
+                <div className="adm-chart-card">
+                  <h4 className="adm-chart-title">Traffic Sources</h4>
+                  <ul className="adm-bar-list">
+                    {analytics.sources.map(s => {
+                      const max = analytics.sources[0].count;
+                      return (
+                        <li key={s.source}>
+                          <span className="adm-bar-list-lbl">
+                            {s.source === 'google'   ? '🔎 Google'
+                            : s.source === 'search'  ? '🔍 Other Search'
+                            : s.source === 'social'  ? '📱 Social'
+                            : s.source === 'direct'  ? '⌨ Direct'
+                            : s.source === 'internal'? '↻ Internal'
+                            :                          '🌐 Other'}
+                          </span>
+                          <span className="adm-bar-list-bar">
+                            <span style={{ width: `${(s.count / max) * 100}%` }} />
+                          </span>
+                          <span className="adm-bar-list-num">{s.count}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="adm-analytics-2col">
+                {/* Device split */}
+                <div className="adm-chart-card">
+                  <h4 className="adm-chart-title">Devices</h4>
+                  <ul className="adm-bar-list">
+                    {analytics.devices.map(d => {
+                      const max = Math.max(...analytics.devices.map(x => x.count));
+                      const pct = analytics.totalViews
+                        ? Math.round((d.count / analytics.totalViews) * 100)
+                        : 0;
+                      return (
+                        <li key={d.device}>
+                          <span className="adm-bar-list-lbl">
+                            {d.device === 'mobile' ? '📱 Mobile'
+                            : d.device === 'tablet' ? '📱 Tablet'
+                            : '🖥 Desktop'}
+                          </span>
+                          <span className="adm-bar-list-bar">
+                            <span style={{ width: `${(d.count / max) * 100}%` }} />
+                          </span>
+                          <span className="adm-bar-list-num">{d.count} <em>({pct}%)</em></span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                {/* Hour heatmap */}
+                <div className="adm-chart-card">
+                  <h4 className="adm-chart-title">Busiest Hours</h4>
+                  <div className="adm-bars adm-bars-thin">
+                    {(() => {
+                      const max = Math.max(1, ...analytics.byHour);
+                      return analytics.byHour.map((c, h) => (
+                        <div key={h} className="adm-bar-col" title={`${h}:00 — ${c} views`}>
+                          <div className="adm-bar" style={{ height: `${(c / max) * 100}%` }} />
+                          <span className="adm-bar-lbl">{h}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </section>

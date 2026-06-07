@@ -1671,3 +1671,174 @@
   .admin-bookings-table .abt-time  { font-size: 0.65rem; }
   .admin-bookings-table .abt-phone { font-size: 0.68rem; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Analytics dashboard
+   ════════════════════════════════════════════════════════════ */
+.adm-analytics {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── KPI cards ── */
+.adm-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+.adm-kpi {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.adm-kpi-label {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+.adm-kpi-value {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  line-height: 1;
+  margin-top: 0.25rem;
+}
+.adm-kpi-hint {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* ── Chart cards ── */
+.adm-chart-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1.1rem 1.1rem 1.2rem;
+}
+.adm-chart-title {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+.adm-analytics-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+/* ── Vertical bar chart (daily + hour) ── */
+.adm-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+  height: 140px;
+}
+.adm-bars-thin { gap: 2px; height: 110px; }
+.adm-bar-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.adm-bar {
+  width: 100%;
+  background: linear-gradient(to top, var(--accent-primary), var(--accent-secondary));
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  position: relative;
+  transition: filter 0.15s ease;
+}
+.adm-bar:hover { filter: brightness(1.2); }
+.adm-bar-num {
+  position: absolute;
+  top: -1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: var(--text-main);
+}
+.adm-bar-lbl {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+}
+
+/* ── Horizontal bar list (top pages, sources, devices) ── */
+.adm-bar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.adm-bar-list li {
+  display: grid;
+  grid-template-columns: 1.4fr 2fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-main);
+}
+.adm-bar-list-lbl {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adm-bar-list-bar {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  height: 8px;
+  overflow: hidden;
+}
+.adm-bar-list-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+}
+.adm-bar-list-num {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 50px;
+  text-align: right;
+}
+.adm-bar-list-num em {
+  font-style: normal;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.65rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .adm-kpi-grid       { grid-template-columns: repeat(2, 1fr); }
+  .adm-analytics-2col { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .adm-kpi          { padding: 0.85rem 0.9rem; }
+  .adm-kpi-value    { font-size: 1.4rem; }
+  .adm-bars         { height: 110px; }
+  .adm-bar-list li  { font-size: 0.72rem; grid-template-columns: 1.2fr 1.6fr auto; }
+}

@@ -1,6 +1,9 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/:path*",     "destination": "/index.html" }
+    {
+      "source": "/((?!api/|.*\\.html$|.*\\.xml$|.*\\.txt$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.webp$|.*\\.svg$|.*\\.ico$|.*\\.json$|.*\\.js$|.*\\.css$|.*\\.map$|.*\\.woff2?$|.*\\.ttf$|.*\\.eot$|assets/).*)",
+      "destination": "/index.html"
+    }
   ]
 }

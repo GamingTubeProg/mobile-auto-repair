@@ -2,3 +2,8 @@ node_modules
 dist
 .env
 .claude/
+
+# Generator deps for docs/PROJECT_DOCUMENTATION.docx
+docs/node_modules/
+docs/package.json
+docs/package-lock.json
